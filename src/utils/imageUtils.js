@@ -21,7 +21,6 @@ export const pickImageAndSave = async () => {
                         }
                     );
                 } else {
-                    // For Android, we can use a simple Alert or custom modal
                     Alert.alert(
                         'Chọn nguồn ảnh',
                         '',
@@ -85,18 +84,44 @@ export const pickImageAndSave = async () => {
 
 export const exrtactTextFromImage = async () => {
     try {
-        const asset = Asset.fromModule(require('../../assets/SoDo.jpg'));
-        await asset.downloadAsync();
+        console.log('Starting OCR process...');
 
-        // ML Kit needs a local path/URI
+        // 1. Kiểm tra sự tồn tại của thư viện
+        if (!TextRecognition) {
+            throw new Error('Thư viện @react-native-ml-kit/text-recognition chưa được cài đặt hoặc chưa được link native.');
+        }
+
+        // 2. Load file từ assets
+        const asset = Asset.fromModule(require('../../assets/SoDo.jpg'));
+        if (!asset) {
+            throw new Error('Không tìm thấy file SoDo.jpg trong thư mục assets.');
+        }
+
+        await asset.downloadAsync();
         const imageUri = asset.localUri || asset.uri;
+        console.log('Loading image from URI:', imageUri);
+
+        // 3. Thực hiện OCR
         const result = await TextRecognition.recognize(imageUri);
 
-        console.log('OCR Result:', result.text);
-        return result.text;
+        console.log('OCR Success!');
+        if (result && result.text) {
+            Alert.alert('Kết quả OCR', result.text.substring(0, 500));
+            return result.text;
+        } else {
+            Alert.alert('Thông báo', 'Không tìm thấy chữ nào trong hình.');
+            return '';
+        }
+
     } catch (error) {
-        console.error('Error extracting text from image:', error);
-        Alert.alert('Lỗi', 'Không thể extract text từ hình ảnh. Hãy chắc chắn file assets/SoDo.jpg tồn tại.');
+        console.error('OCR Error Detail:', error);
+
+        let errorMsg = error.message;
+        if (errorMsg.includes('undefined')) {
+            errorMsg = 'Native Module chưa sẵn sàng. Bạn hãy chắc chắn đã build app bằng lệnh "npx expo run:android" và KHÔNG dùng Expo Go.';
+        }
+
+        Alert.alert('Lỗi OCR', errorMsg);
         return null;
     }
 };
