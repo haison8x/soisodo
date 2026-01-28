@@ -10,8 +10,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { nanoid } from 'nanoid';
+
 // Import sub-components
-import Header from '../components/HomeScreen/Header';
 import ProjectTitleInput from '../components/HomeScreen/ProjectTitleInput';
 import CitySelector from '../components/HomeScreen/CitySelector';
 import CityModal from '../components/HomeScreen/CityModal';
@@ -21,7 +22,7 @@ import CoordinateRow from '../components/HomeScreen/CoordinateRow';
 import { CITIES, INITIAL_COORDINATES } from '../constants/mockDataHomeScreen';
 
 // Import utils
-import { pickImageAndSave, exrtactTextFromImage } from '../utils/imageUtils';
+import { pickImageAndSave, extractCoordinatesFromImage } from '../utils/imageUtils';
 
 const HomeScreen = () => {
     const [title, setTitle] = useState('Nhà Tôi');
@@ -35,14 +36,14 @@ const HomeScreen = () => {
     const [newY, setNewY] = useState('');
 
     const handleScan = async () => {
-        await exrtactTextFromImage();
         setIsScanning(true);
         const savedUri = await pickImageAndSave();
+        const scannedCoordinates = await extractCoordinatesFromImage(savedUri);
         setIsScanning(false);
 
-        if (savedUri) {
-            console.log('User picked image and saved to:', savedUri);
-            // Ready for OCR or other processing
+        if (scannedCoordinates) {
+            setCoordinates(scannedCoordinates);
+            console.log('Scanned coordinates:', scannedCoordinates);
         }
     };
 
@@ -52,8 +53,7 @@ const HomeScreen = () => {
 
     const addCoordinate = () => {
         if (newX && newY) {
-            const newId = coordinates.length > 0 ? Math.max(...coordinates.map(c => c.id)) + 1 : 1;
-            setCoordinates([...coordinates, { id: newId, x: newX, y: newY }]);
+            setCoordinates([...coordinates, { id: nanoid(), x: newX, y: newY }]);
             setNewX('');
             setNewY('');
         }

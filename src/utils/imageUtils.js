@@ -1,3 +1,4 @@
+import { nanoid } from 'nanoid';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { Alert, ActionSheetIOS, Platform } from 'react-native';
@@ -62,17 +63,7 @@ export const pickImageAndSave = async () => {
 
         if (!result.canceled && result.assets && result.assets.length > 0) {
             const selectedImage = result.assets[0];
-            const extension = selectedImage.uri.split('.').pop();
-            const fileName = `working.${extension}`;
-            const destinationUri = `${FileSystem.cacheDirectory}${fileName}`;
-
-            await FileSystem.copyAsync({
-                from: selectedImage.uri,
-                to: destinationUri,
-            });
-
-            console.log('Image saved to:', destinationUri);
-            return destinationUri;
+            return selectedImage.uri;
         }
         return null;
     } catch (error) {
@@ -82,32 +73,23 @@ export const pickImageAndSave = async () => {
     }
 };
 
-export const exrtactTextFromImage = async () => {
+export const exrtactTextFromImage = async (imageUri) => {
     try {
-        console.log('Starting OCR process...');
-
-        // 1. Kiểm tra sự tồn tại của thư viện
-        if (!TextRecognition) {
-            throw new Error('Thư viện @react-native-ml-kit/text-recognition chưa được cài đặt hoặc chưa được link native.');
-        }
-
-        // 2. Load file từ assets
-        const asset = Asset.fromModule(require('../../assets/SoDo.jpg'));
-        if (!asset) {
-            throw new Error('Không tìm thấy file SoDo.jpg trong thư mục assets.');
-        }
-
-        await asset.downloadAsync();
-        const imageUri = asset.localUri || asset.uri;
         console.log('Loading image from URI:', imageUri);
 
-        // 3. Thực hiện OCR
         const result = await TextRecognition.recognize(imageUri);
 
-        console.log('OCR Success!');
         if (result && result.text) {
-            Alert.alert('Kết quả OCR', result.text.substring(0, 500));
-            return result.text;
+            const filteredLines = result.text.split('\n').map(line => {
+                const matches = line.match(/[\d.,]+/g);
+                if (!matches) return null;
+
+                const validMatches = matches.filter(m => (m.match(/\d/g) || []).length >= 6);
+                return validMatches.length > 0 ? validMatches.join(' ') : null;
+            }).filter(line => line !== null);
+
+            const filteredText = filteredLines.join('\n');
+            return filteredText;
         } else {
             Alert.alert('Thông báo', 'Không tìm thấy chữ nào trong hình.');
             return '';
@@ -124,4 +106,28 @@ export const exrtactTextFromImage = async () => {
         Alert.alert('Lỗi OCR', errorMsg);
         return null;
     }
+};
+
+export const extractCoordinatesFromText = (text) => {
+    if (!text) return [];
+
+    return text.split('\n').map(line => {
+        // Match numbers that can include a decimal point
+        // This regex handles: 1234.56, 1234, .56 (optional)
+        const matches = line.match(/\d+(\.\d+)?/g);
+
+        if (matches && matches.length === 2) {
+            return {
+                id: nanoid(),
+                x: matches[0],
+                y: matches[1]
+            };
+        }
+        return null;
+    }).filter(coord => coord !== null);
+};
+
+export const extractCoordinatesFromImage = async (imageUri) => {
+    const text = await exrtactTextFromImage(imageUri);
+    return extractCoordinatesFromText(text);
 };
