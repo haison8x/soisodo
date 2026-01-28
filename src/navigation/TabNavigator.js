@@ -1,6 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
+import { View, StyleSheet, Platform } from 'react-native';
+import { Home, MessageSquare, FileText, Settings as SettingsIcon } from 'lucide-react-native';
 
 // Import screens
 import HomeScreen from '../screens/HomeScreen';
@@ -15,48 +16,67 @@ const TabNavigator = () => {
         <Tab.Navigator
             screenOptions={({ route }) => ({
                 tabBarIcon: ({ focused, color, size }) => {
-                    let iconName;
+                    let IconComponent;
 
                     if (route.name === 'Trang chủ') {
-                        iconName = focused ? 'home' : 'home-outline';
+                        IconComponent = Home;
                     } else if (route.name === 'Chat') {
-                        iconName = focused ? 'chatbubble-ellipses' : 'chatbubble-ellipses-outline';
+                        IconComponent = MessageSquare;
                     } else if (route.name === 'Sổ đỏ') {
-                        iconName = focused ? 'document-text' : 'document-text-outline';
+                        IconComponent = FileText;
                     } else if (route.name === 'Cài đặt') {
-                        iconName = focused ? 'settings' : 'settings-outline';
+                        IconComponent = SettingsIcon;
                     }
 
-                    return <Ionicons name={iconName} size={size} color={color} />;
+                    return (
+                        <View style={[
+                            styles.iconContainer,
+                            focused && styles.activeIconContainer
+                        ]}>
+                            <IconComponent
+                                size={22}
+                                color={color}
+                                strokeWidth={focused ? 2.5 : 2}
+                            />
+                        </View>
+                    );
                 },
-                tabBarActiveTintColor: '#007AFF',
-                tabBarInactiveTintColor: 'gray',
+                tabBarActiveTintColor: '#0084FF',
+                tabBarInactiveTintColor: '#8E8E93',
                 headerShown: false,
-                tabBarStyle: {
-                    position: 'absolute',
-                    bottom: 10,
-                    left: 20,
-                    right: 20,
-                    elevation: 10,
-                    backgroundColor: '#ffffff',
-                    borderRadius: 20,
-                    height: 70,
-                    paddingBottom: 0,
-                    paddingTop: 10,
-                    borderTopWidth: 0,
-                    shadowColor: '#000',
-                    shadowOffset: {
-                        width: 0,
-                        height: 5,
-                    },
-                    shadowOpacity: 0.1,
-                    shadowRadius: 10,
-                },
+                tabBarShowLabel: true,
                 tabBarLabelStyle: {
                     fontSize: 11,
                     fontWeight: '600',
-                    marginBottom: 5,
-                }
+                    marginBottom: 10,
+                },
+                tabBarTransparent: true,
+                tabBarStyle: {
+                    position: 'absolute',
+                    bottom: Platform.OS === 'ios' ? 25 : 15,
+                    left: 10,
+                    right: 10,
+                    height: 65,
+                    borderTopWidth: 0,
+                    elevation: 0,
+                    backgroundColor: 'transparent',
+                },
+                tabBarBackground: () => (
+                    <View style={{
+                        flex: 1,
+                        backgroundColor: '#FFFFFF',
+                        borderRadius: 10,
+                        shadowColor: '#000',
+                        shadowOffset: {
+                            width: 0,
+                            height: 4,
+                        },
+                        shadowOpacity: 0.15,
+                        shadowRadius: 12,
+                        elevation: 8,
+                    }} />
+                ),
+
             })}
         >
             <Tab.Screen name="Trang chủ" component={HomeScreen} />
@@ -67,4 +87,19 @@ const TabNavigator = () => {
     );
 };
 
+const styles = StyleSheet.create({
+    iconContainer: {
+        width: 40,
+        height: 40,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 20,
+        marginTop: 5,
+    },
+    activeIconContainer: {
+        backgroundColor: '#F0F7FF',
+    }
+});
+
 export default TabNavigator;
+

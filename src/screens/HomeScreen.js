@@ -20,15 +20,31 @@ import CoordinateRow from '../components/HomeScreen/CoordinateRow';
 // Import constants/mock data
 import { CITIES, INITIAL_COORDINATES } from '../constants/mockDataHomeScreen';
 
+// Import utils
+import { pickImageAndSave, exrtactTextFromImage } from '../utils/imageUtils';
+
 const HomeScreen = () => {
     const [title, setTitle] = useState('Nhà Tôi');
     const [selectedCity, setSelectedCity] = useState(CITIES.find(c => c.label === "Hồ Chí Minh"));
     const [modalVisible, setModalVisible] = useState(false);
     const [searchText, setSearchText] = useState('');
     const [coordinates, setCoordinates] = useState(INITIAL_COORDINATES);
+    const [isScanning, setIsScanning] = useState(false);
 
     const [newX, setNewX] = useState('');
     const [newY, setNewY] = useState('');
+
+    const handleScan = async () => {
+        await exrtactTextFromImage();
+        setIsScanning(true);
+        const savedUri = await pickImageAndSave();
+        setIsScanning(false);
+
+        if (savedUri) {
+            console.log('User picked image and saved to:', savedUri);
+            // Ready for OCR or other processing
+        }
+    };
 
     const deleteCoordinate = (id) => {
         setCoordinates(coordinates.filter(coord => coord.id !== id));
@@ -43,8 +59,16 @@ const HomeScreen = () => {
         }
     };
 
+    const swapXY = () => {
+        setCoordinates(prev => prev.map(coord => ({
+            ...coord,
+            x: coord.y,
+            y: coord.x
+        })));
+    };
+
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
             <Header title="Home" />
 
             <KeyboardAvoidingView
@@ -75,11 +99,22 @@ const HomeScreen = () => {
                     {/* Scan Row */}
                     <View style={styles.scanRow}>
                         <Text style={styles.scanText}>Nhập tọa độ hoặc</Text>
-                        <TouchableOpacity style={styles.scanButton}>
-                            <Text style={styles.scanButtonText}>Scan</Text>
+                        <TouchableOpacity
+                            style={[styles.scanButton, isScanning && { opacity: 0.6 }]}
+                            onPress={handleScan}
+                            disabled={isScanning}
+                        >
+                            <Text style={styles.scanButtonText}>
+                                {isScanning ? 'Đang xử lý...' : 'Scan'}
+                            </Text>
                         </TouchableOpacity>
                         <Text style={styles.scanText}>từ bộ sưu tập ảnh</Text>
                     </View>
+
+                    {/* Import Google Row */}
+                    <TouchableOpacity style={[styles.fullWidthButton, styles.secondaryButton, { marginBottom: 20 }]}>
+                        <Text style={styles.secondaryButtonText}>Import Google</Text>
+                    </TouchableOpacity>
 
                     {/* Coordinates List */}
                     {coordinates.map((coord, index) => (
@@ -97,8 +132,11 @@ const HomeScreen = () => {
                         <TouchableOpacity style={[styles.button, styles.blueButton]}>
                             <Text style={styles.buttonText}>Sửa X&Y</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={[styles.button, styles.blueButton]}>
-                            <Text style={styles.buttonText}>Import Google</Text>
+                        <TouchableOpacity
+                            style={[styles.button, styles.orangeButton]}
+                            onPress={swapXY}
+                        >
+                            <Text style={styles.buttonText}>Swap X & Y</Text>
                         </TouchableOpacity>
                     </View>
 
@@ -142,7 +180,7 @@ const styles = StyleSheet.create({
     scanRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: 12,
         backgroundColor: '#F1F5F9',
         padding: 10,
         borderRadius: 10,
@@ -168,6 +206,27 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 14,
     },
+    fullWidthButton: {
+        width: '100%',
+        paddingVertical: 14,
+        borderRadius: 12,
+        alignItems: 'center',
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+    },
+    secondaryButton: {
+        backgroundColor: '#F8FAFC',
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
+    },
+    secondaryButtonText: {
+        color: '#475569',
+        fontSize: 14,
+        fontWeight: '700',
+    },
     actionRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -187,11 +246,15 @@ const styles = StyleSheet.create({
     blueButton: {
         backgroundColor: '#007AFF',
     },
+    orangeButton: {
+        backgroundColor: '#F97316',
+    },
     buttonText: {
         color: '#FFF',
         fontSize: 14,
         fontWeight: '700',
     }
 });
+
 
 export default HomeScreen;
