@@ -23,7 +23,7 @@ const styles = StyleSheet.create({
         borderColor: '#E2E8F0',
         padding: 12,
         borderRadius: 12,
-        marginBottom: 20,
+        marginBottom: 5,
         backgroundColor: '#F8FAFC',
     },
     cityText: {

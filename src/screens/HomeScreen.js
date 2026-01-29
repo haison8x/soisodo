@@ -10,24 +10,27 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { nanoid } from 'nanoid';
+import { nanoid } from 'nanoid/non-secure';
 
 // Import sub-components
 import ProjectTitleInput from '../components/HomeScreen/ProjectTitleInput';
 import CitySelector from '../components/HomeScreen/CitySelector';
 import CityModal from '../components/HomeScreen/CityModal';
 import CoordinateRow from '../components/HomeScreen/CoordinateRow';
+import CoordinateEditModal from '../components/HomeScreen/CoordinateEditModal';
 
 // Import constants/mock data
 import { CITIES, INITIAL_COORDINATES } from '../constants/mockDataHomeScreen';
 
 // Import utils
-import { pickImageAndSave, extractCoordinatesFromImage } from '../utils/imageUtils';
+import { pickImageAndSave, exrtactTextFromImage } from '../utils/imageUtils';
 
 const HomeScreen = () => {
     const [title, setTitle] = useState('Nhà Tôi');
     const [selectedCity, setSelectedCity] = useState(CITIES.find(c => c.label === "Hồ Chí Minh"));
     const [modalVisible, setModalVisible] = useState(false);
+    const [editModalVisible, setEditModalVisible] = useState(false);
+    const [editText, setEditText] = useState('');
     const [searchText, setSearchText] = useState('');
     const [coordinates, setCoordinates] = useState(INITIAL_COORDINATES);
     const [isScanning, setIsScanning] = useState(false);
@@ -38,12 +41,12 @@ const HomeScreen = () => {
     const handleScan = async () => {
         setIsScanning(true);
         const savedUri = await pickImageAndSave();
-        const scannedCoordinates = await extractCoordinatesFromImage(savedUri);
+        const text = await exrtactTextFromImage(savedUri);
         setIsScanning(false);
 
-        if (scannedCoordinates) {
-            setCoordinates(scannedCoordinates);
-            console.log('Scanned coordinates:', scannedCoordinates);
+        if (text) {
+            setEditText(text);
+            setEditModalVisible(true);
         }
     };
 
@@ -59,12 +62,45 @@ const HomeScreen = () => {
         }
     };
 
+    const formatCoordinatesForEdit = () => {
+        return coordinates.map(c => `${c.x}\t${c.y}`).join('\n');
+    };
+
+    const handleSaveEdit = (text) => {
+        if (!text.trim()) {
+            setCoordinates([]);
+            return;
+        }
+
+        // Split by any whitespace (spaces, tabs, newlines) and filter out empty strings
+        const tokens = text.trim().split(/\s+/).filter(t => t !== '');
+
+        const newCoordinates = [];
+        for (let i = 0; i < tokens.length - 1; i += 2) {
+            newCoordinates.push({
+                id: nanoid(),
+                x: tokens[i],
+                y: tokens[i + 1]
+            });
+        }
+
+        if (newCoordinates.length > 0) {
+            setCoordinates(newCoordinates);
+        }
+    };
+
     const swapXY = () => {
+        // Swap existing coordinates in the list
         setCoordinates(prev => prev.map(coord => ({
             ...coord,
             x: coord.y,
             y: coord.x
         })));
+
+        // Also swap the values in the "New Coordinate" input fields
+        const tempX = newX;
+        setNewX(newY);
+        setNewY(tempX);
     };
 
     return (
@@ -94,6 +130,13 @@ const HomeScreen = () => {
                         selectedCity={selectedCity}
                     />
 
+                    <CoordinateEditModal
+                        visible={editModalVisible}
+                        onClose={() => setEditModalVisible(false)}
+                        onSave={handleSaveEdit}
+                        initialValue={editText}
+                    />
+
                     {/* Scan Row */}
                     <View style={styles.scanRow}>
                         <Text style={styles.scanText}>Nhập tọa độ hoặc</Text>
@@ -109,11 +152,6 @@ const HomeScreen = () => {
                         <Text style={styles.scanText}>từ bộ sưu tập ảnh</Text>
                     </View>
 
-                    {/* Import Google Row */}
-                    <TouchableOpacity style={[styles.fullWidthButton, styles.secondaryButton, { marginBottom: 20 }]}>
-                        <Text style={styles.secondaryButtonText}>Import Google</Text>
-                    </TouchableOpacity>
-
                     {/* Coordinates List */}
                     {coordinates.map((coord, index) => (
                         <CoordinateRow
@@ -127,14 +165,20 @@ const HomeScreen = () => {
 
                     {/* Action Buttons Row 1 */}
                     <View style={styles.actionRow}>
-                        <TouchableOpacity style={[styles.button, styles.blueButton]}>
+                        <TouchableOpacity
+                            style={[styles.button, styles.blueButton]}
+                            onPress={() => {
+                                setEditText(formatCoordinatesForEdit());
+                                setEditModalVisible(true);
+                            }}
+                        >
                             <Text style={styles.buttonText}>Sửa X&Y</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={[styles.button, styles.orangeButton]}
                             onPress={swapXY}
                         >
-                            <Text style={styles.buttonText}>Swap X & Y</Text>
+                            <Text style={styles.buttonText}>Swap X&Y</Text>
                         </TouchableOpacity>
                     </View>
 

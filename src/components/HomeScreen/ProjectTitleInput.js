@@ -22,7 +22,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         borderBottomWidth: 2,
         borderBottomColor: '#007AFF',
-        marginVertical: 15,
+        marginVertical: 5,
         paddingBottom: 5,
     },
     projectTitle: {

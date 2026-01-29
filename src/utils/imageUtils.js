@@ -1,4 +1,4 @@
-import { nanoid } from 'nanoid';
+import { nanoid } from 'nanoid/non-secure';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { Alert, ActionSheetIOS, Platform } from 'react-native';
@@ -75,8 +75,6 @@ export const pickImageAndSave = async () => {
 
 export const exrtactTextFromImage = async (imageUri) => {
     try {
-        console.log('Loading image from URI:', imageUri);
-
         const result = await TextRecognition.recognize(imageUri);
 
         if (result && result.text) {
