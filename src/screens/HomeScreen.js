@@ -24,8 +24,11 @@ import { CITIES, INITIAL_COORDINATES } from '../constants/mockDataHomeScreen';
 
 // Import utils
 import { pickImageAndSave, exrtactTextFromImage } from '../utils/imageUtils';
+import { toGooglePoints } from '../utils/point';
+import { useNavigation } from '@react-navigation/native';
 
 const HomeScreen = () => {
+    const navigation = useNavigation();
     const [title, setTitle] = useState('Nhà Tôi');
     const [selectedCity, setSelectedCity] = useState(CITIES.find(c => c.label === "Hồ Chí Minh"));
     const [modalVisible, setModalVisible] = useState(false);
@@ -101,6 +104,13 @@ const HomeScreen = () => {
         const tempX = newX;
         setNewX(newY);
         setNewY(tempX);
+    };
+
+    const handleViewMap = () => {
+        if (coordinates.length > 0) {
+            const mapData = toGooglePoints(title, selectedCity.value, coordinates);
+            navigation.navigate('Map', { mapData });
+        }
     };
 
     return (
@@ -200,7 +210,10 @@ const HomeScreen = () => {
                         >
                             <Text style={styles.buttonText}>Thêm Tọa Độ</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={[styles.button, styles.blueButton]}>
+                        <TouchableOpacity
+                            style={[styles.button, styles.blueButton]}
+                            onPress={handleViewMap}
+                        >
                             <Text style={styles.buttonText}>Xem Bản Đồ</Text>
                         </TouchableOpacity>
                     </View>
