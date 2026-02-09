@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Coi Sổ Đỏ",
-    "slug": "coi-so-do",
+    "name": "Soi Tọa Độ - Xem đất trên bản đồ",
+    "slug": "soitoadovn",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -21,13 +21,20 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.haison8x.coisodo"
+      "package": "com.tranhiepgold.soitoadovn"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-asset"
+      "expo-asset",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location."
+        }
+      ],
+      "@maplibre/maplibre-react-native"
     ]
   }
 }

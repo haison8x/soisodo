@@ -130,19 +130,19 @@ proj4Dict['EPSG:_Yên-Bái'] =
   '+proj=tmerc +lat_0=0 +lon_0=104.750 +k=0.9999 +x_0=500000 +y_0=0 +ellps=WGS84 +towgs84=-191.90441429,-39.30318279,-111.45032835,-0.00928836,0.01975479,-0.00427372,0.252906278 +units=m +no_defs';
 
 
-export function toGooglePoints(name, province, points) {
+export function toMapPoints(name, province, points) {
   const projection = proj4Dict[province];
-  let googlePoints = points.map(p =>
+  let wgs84Points = points.map(p =>
     proj4(projection, 'WGS84', { y: parseFloat(p.x), x: parseFloat(p.y) }),
   );
 
-  googlePoints = googlePoints.map(p => {
+  wgs84Points = wgs84Points.map(p => {
     return { longitude: p.x, latitude: p.y };
   });
 
   const mapDict = {
     points: points,
-    googlePoints: googlePoints,
+    wgs84Points: wgs84Points,
     name: name,
     province: province,
   };

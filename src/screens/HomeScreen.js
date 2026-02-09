@@ -24,7 +24,7 @@ import { CITIES, INITIAL_COORDINATES } from '../constants/mockDataHomeScreen';
 
 // Import utils
 import { pickImageAndSave, exrtactTextFromImage } from '../utils/imageUtils';
-import { toGooglePoints } from '../utils/point';
+import { toMapPoints } from '../utils/point';
 import { useNavigation } from '@react-navigation/native';
 
 const HomeScreen = () => {
@@ -108,7 +108,7 @@ const HomeScreen = () => {
 
     const handleViewMap = () => {
         if (coordinates.length > 0) {
-            const mapData = toGooglePoints(title, selectedCity.value, coordinates);
+            const mapData = toMapPoints(title, selectedCity.value, coordinates);
             navigation.navigate('Map', { mapData });
         }
     };
