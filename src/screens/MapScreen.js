@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { View, StyleSheet, Text, Platform, TouchableOpacity, Animated, Linking } from 'react-native';
+import { View, StyleSheet, Text, Platform, TouchableOpacity, Animated, Linking, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { nanoid } from 'nanoid/non-secure';
 import MapLibre, {
     MapView,
     Camera,
@@ -11,8 +13,11 @@ import MapLibre, {
 } from '@maplibre/maplibre-react-native';
 import * as Location from 'expo-location';
 import { useRoute } from '@react-navigation/native';
-import { Layers, Target, Plus, Minus, Map as MapIcon, Share2, MapPin } from 'lucide-react-native';
+import { Layers, Target, Plus, Minus, Map as MapIcon, Share2, MapPin, Save } from 'lucide-react-native';
+import SaveProjectModal from '../components/HomeScreen/SaveProjectModal';
+import { CITIES } from '../constants/mockDataHomeScreen';
 import { Buffer } from 'buffer';
+import { getAddressFromCoordinates } from '../utils/geocoding';
 
 // MapTiler Configuration
 const MAPTILER_KEY = '8DY7FmNFHpdvQiaVc2gb';
@@ -30,6 +35,7 @@ const MapScreen = () => {
     const route = useRoute();
     const mapData = route.params?.mapData;
     const cameraRef = useRef(null);
+    const [saveModalVisible, setSaveModalVisible] = useState(false);
 
     const [location, setLocation] = useState(null);
     const [permissionGranted, setPermissionGranted] = useState(false);
@@ -160,6 +166,69 @@ const MapScreen = () => {
         }
     };
 
+    const handleSaveProject = async (saveTitle) => {
+        try {
+            // Get address from the first point of the polygon
+            let address = '';
+            if (mapData?.wgs84Points && mapData.wgs84Points.length > 0) {
+                const firstPoint = mapData.wgs84Points[0];
+                address = await getAddressFromCoordinates(firstPoint.latitude, firstPoint.longitude);
+            }
+
+            const existingProjectsJson = await AsyncStorage.getItem('saved_projects');
+            let existingProjects = existingProjectsJson ? JSON.parse(existingProjectsJson) : [];
+
+            const existingIndex = existingProjects.findIndex(p => p.title.toLowerCase() === saveTitle.toLowerCase());
+
+            const saveData = (isOverwrite = false) => {
+                const projectData = {
+                    id: isOverwrite ? existingProjects[existingIndex].id : nanoid(),
+                    title: saveTitle,
+                    city: initialCityLabel,
+                    cityValue: mapData.province, // Original province code
+                    coordinates: mapData.points, // Original coordinates
+                    address: address, // Saved address
+                    createdAt: isOverwrite ? existingProjects[existingIndex].createdAt : new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                };
+
+                let updatedProjects;
+                if (isOverwrite) {
+                    updatedProjects = [...existingProjects];
+                    updatedProjects[existingIndex] = projectData;
+                } else {
+                    updatedProjects = [projectData, ...existingProjects];
+                }
+
+                AsyncStorage.setItem('saved_projects', JSON.stringify(updatedProjects))
+                    .then(() => Alert.alert('Thành công', 'Đã lưu dự án thành công!'))
+                    .catch(e => console.error(e));
+            };
+
+            if (existingIndex !== -1) {
+                Alert.alert(
+                    "Trùng tên dự án",
+                    `Dự án "${saveTitle}" đã tồn tại. Bạn có muốn ghi đè không?`,
+                    [
+                        { text: "Hủy", style: "cancel" },
+                        { text: "Ghi đè", onPress: () => saveData(true) }
+                    ]
+                );
+            } else {
+                saveData(false);
+            }
+        } catch (error) {
+            console.error('Error saving project:', error);
+            Alert.alert('Lỗi', 'Lỗi khi lưu dự án');
+        }
+    };
+
+    const initialCityLabel = useMemo(() => {
+        if (!mapData?.province) return '';
+        const cityObj = CITIES.find(c => c.value === mapData.province);
+        return cityObj ? cityObj.label : '';
+    }, [mapData]);
+
     const openGoogleMaps = () => {
         if (!mapData?.wgs84Points || mapData.wgs84Points.length === 0) return;
 
@@ -279,9 +348,21 @@ const MapScreen = () => {
                     <MapPin size={22} color="#FFFFFF" />
                     <Text style={styles.btnLabel}>Google Map</Text>
                 </TouchableOpacity>
+                <TouchableOpacity style={[styles.glassBtn, { backgroundColor: '#34C759' }]} onPress={() => setSaveModalVisible(true)}>
+                    <Save size={22} color="#FFFFFF" />
+                    <Text style={styles.btnLabel}>Lưu Lại</Text>
+                </TouchableOpacity>
                 <TouchableOpacity style={styles.glassBtn} onPress={() => fitPolygon(1000)}>
                     <Target size={22} color="#FFFFFF" />
                 </TouchableOpacity>
+
+                <SaveProjectModal
+                    visible={saveModalVisible}
+                    onClose={() => setSaveModalVisible(false)}
+                    onSave={handleSaveProject}
+                    initialTitle={mapData?.name}
+                    initialCity={initialCityLabel}
+                />
             </View>
         </View>
     );

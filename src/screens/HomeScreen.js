@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -6,9 +6,11 @@ import {
     TouchableOpacity,
     ScrollView,
     KeyboardAvoidingView,
-    Platform
+    Platform,
+    Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { nanoid } from 'nanoid/non-secure';
 
@@ -18,6 +20,7 @@ import CitySelector from '../components/HomeScreen/CitySelector';
 import CityModal from '../components/HomeScreen/CityModal';
 import CoordinateRow from '../components/HomeScreen/CoordinateRow';
 import CoordinateEditModal from '../components/HomeScreen/CoordinateEditModal';
+import SaveProjectModal from '../components/HomeScreen/SaveProjectModal';
 
 // Import constants/mock data
 import { CITIES, INITIAL_COORDINATES } from '../constants/mockDataHomeScreen';
@@ -25,10 +28,12 @@ import { CITIES, INITIAL_COORDINATES } from '../constants/mockDataHomeScreen';
 // Import utils
 import { pickImageAndSave, exrtactTextFromImage } from '../utils/imageUtils';
 import { toMapPoints } from '../utils/point';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { getAddressFromCoordinates } from '../utils/geocoding';
 
 const HomeScreen = () => {
     const navigation = useNavigation();
+    const route = useRoute();
     const [title, setTitle] = useState('Nhà Tôi');
     const [selectedCity, setSelectedCity] = useState(CITIES.find(c => c.label === "Hồ Chí Minh"));
     const [modalVisible, setModalVisible] = useState(false);
@@ -37,9 +42,30 @@ const HomeScreen = () => {
     const [searchText, setSearchText] = useState('');
     const [coordinates, setCoordinates] = useState(INITIAL_COORDINATES);
     const [isScanning, setIsScanning] = useState(false);
+    const [saveModalVisible, setSaveModalVisible] = useState(false);
 
     const [newX, setNewX] = useState('');
     const [newY, setNewY] = useState('');
+
+    useEffect(() => {
+        if (route.params?.projectData) {
+            const { title, cityValue, coordinates } = route.params.projectData;
+
+            if (title) setTitle(title);
+
+            if (cityValue) {
+                const cityObj = CITIES.find(c => c.value === cityValue);
+                if (cityObj) setSelectedCity(cityObj);
+            }
+
+            if (coordinates && Array.isArray(coordinates)) {
+                setCoordinates(coordinates);
+            }
+
+            // Xóa params sau khi đã load để tránh lặp lại khi quay lại màn hình
+            navigation.setParams({ projectData: undefined });
+        }
+    }, [route.params?.projectData]);
 
     const handleScan = async () => {
         setIsScanning(true);
@@ -110,6 +136,66 @@ const HomeScreen = () => {
         if (coordinates.length > 0) {
             const mapData = toMapPoints(title, selectedCity.value, coordinates);
             navigation.navigate('Map', { mapData });
+        }
+    };
+
+    const handleSaveProject = async (saveTitle) => {
+        try {
+            // Convert coordinates to WGS84 to get the address
+            let address = '';
+            if (coordinates.length > 0) {
+                const mapData = toMapPoints(title, selectedCity.value, coordinates);
+                if (mapData?.wgs84Points && mapData.wgs84Points.length > 0) {
+                    const firstPoint = mapData.wgs84Points[0];
+                    address = await getAddressFromCoordinates(firstPoint.latitude, firstPoint.longitude);
+                }
+            }
+
+            const existingProjectsJson = await AsyncStorage.getItem('saved_projects');
+            let existingProjects = existingProjectsJson ? JSON.parse(existingProjectsJson) : [];
+
+            const existingIndex = existingProjects.findIndex(p => p.title.toLowerCase() === saveTitle.toLowerCase());
+
+            const saveData = (isOverwrite = false) => {
+                const projectData = {
+                    id: isOverwrite ? existingProjects[existingIndex].id : nanoid(),
+                    title: saveTitle,
+                    city: selectedCity.label,
+                    cityValue: selectedCity.value,
+                    coordinates: coordinates,
+                    address: address, // Saved address
+                    createdAt: isOverwrite ? existingProjects[existingIndex].createdAt : new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                };
+
+                let updatedProjects;
+                if (isOverwrite) {
+                    updatedProjects = [...existingProjects];
+                    updatedProjects[existingIndex] = projectData;
+                } else {
+                    updatedProjects = [projectData, ...existingProjects];
+                }
+
+                AsyncStorage.setItem('saved_projects', JSON.stringify(updatedProjects))
+                    .then(() => alert('Đã lưu dự án thành công!'))
+                    .catch(e => console.error(e));
+            };
+
+            if (existingIndex !== -1) {
+                Alert.alert(
+                    "Trùng tên dự án",
+                    `Dự án "${saveTitle}" đã tồn tại. Bạn có muốn ghi đè không?`,
+                    [
+                        { text: "Hủy", style: "cancel" },
+                        { text: "Ghi đè", onPress: () => saveData(true) }
+                    ]
+                );
+            } else {
+                saveData(false);
+            }
+        } catch (error) {
+            console.error('Error saving project:', error);
+            alert('Lỗi khi lưu dự án');
         }
     };
 
@@ -217,6 +303,21 @@ const HomeScreen = () => {
                             <Text style={styles.buttonText}>Xem Bản Đồ</Text>
                         </TouchableOpacity>
                     </View>
+
+                    <TouchableOpacity
+                        style={[styles.fullWidthButton, styles.greenButton, { marginTop: 5 }]}
+                        onPress={() => setSaveModalVisible(true)}
+                    >
+                        <Text style={styles.buttonText}>Lưu Lại</Text>
+                    </TouchableOpacity>
+
+                    <SaveProjectModal
+                        visible={saveModalVisible}
+                        onClose={() => setSaveModalVisible(false)}
+                        onSave={handleSaveProject}
+                        initialTitle={title}
+                        initialCity={selectedCity?.label}
+                    />
                 </ScrollView>
             </KeyboardAvoidingView>
         </SafeAreaView>
@@ -300,6 +401,9 @@ const styles = StyleSheet.create({
     },
     blueButton: {
         backgroundColor: '#007AFF',
+    },
+    greenButton: {
+        backgroundColor: '#34C759',
     },
     orangeButton: {
         backgroundColor: '#F97316',
