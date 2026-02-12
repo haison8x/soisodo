@@ -98,7 +98,7 @@ const HomeScreen = () => {
     };
 
     const formatCoordinatesForEdit = () => {
-        return coordinates.map(c => `${c.x}\t${c.y}`).join('\n');
+        return coordinates.map(c => `${c.x}\n${c.y}`).join('\n');
     };
 
     const handleSaveEdit = (text) => {
