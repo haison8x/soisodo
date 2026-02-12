@@ -130,6 +130,23 @@ proj4Dict['EPSG:_Yên-Bái'] =
   '+proj=tmerc +lat_0=0 +lon_0=104.750 +k=0.9999 +x_0=500000 +y_0=0 +ellps=WGS84 +towgs84=-191.90441429,-39.30318279,-111.45032835,-0.00928836,0.01975479,-0.00427372,0.252906278 +units=m +no_defs';
 
 
+export { proj4Dict };
+
+export function convertVN2000ToWGS84(x, y, province) {
+  if (!province || !proj4Dict[province]) {
+    return null;
+  }
+
+  try {
+    const projection = proj4Dict[province];
+    const point = proj4(projection, 'WGS84', { y: parseFloat(x), x: parseFloat(y) });
+    return { latitude: point.y, longitude: point.x };
+  } catch (error) {
+    console.error("Conversion error:", error);
+    return null;
+  }
+}
+
 export function toMapPoints(name, province, points) {
   const projection = proj4Dict[province];
   let wgs84Points = points.map(p =>

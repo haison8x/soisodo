@@ -10,7 +10,7 @@ import SettingsStack from './SettingsStack';
 // Import screens
 import SoDoScreen from '../screens/SoDoScreen';
 import PlanningScreen from '../screens/PlanningScreen';
-import VN2000Screen from '../screens/VN2000Screen';
+import VN2000Stack from './VN2000Stack';
 
 const Tab = createBottomTabNavigator();
 
@@ -85,7 +85,7 @@ const TabNavigator = () => {
             })}
         >
             <Tab.Screen name="Trang chủ" component={HomeStack} />
-            <Tab.Screen name="VN2000" component={VN2000Screen} />
+            <Tab.Screen name="VN2000" component={VN2000Stack} />
             <Tab.Screen name="Sổ đỏ" component={SoDoScreen} />
             <Tab.Screen name="Quy hoạch" component={PlanningScreen} />
             <Tab.Screen name="Cài đặt" component={SettingsStack} />
