@@ -1,14 +1,15 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, StyleSheet, Platform } from 'react-native';
-import { Home, FileText, Settings as SettingsIcon } from 'lucide-react-native';
+import { Home, FileText, Settings as SettingsIcon, Map } from 'lucide-react-native';
 
 // Import navigation stacks
 import HomeStack from './HomeStack';
+import SettingsStack from './SettingsStack';
 
 // Import screens
 import SoDoScreen from '../screens/SoDoScreen';
-import SettingsScreen from '../screens/SettingsScreen';
+import PlanningScreen from '../screens/PlanningScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -23,6 +24,8 @@ const TabNavigator = () => {
                         IconComponent = Home;
                     } else if (route.name === 'Sổ đỏ') {
                         IconComponent = FileText;
+                    } else if (route.name === 'Quy hoạch') {
+                        IconComponent = Map;
                     } else if (route.name === 'Cài đặt') {
                         IconComponent = SettingsIcon;
                     }
@@ -80,7 +83,8 @@ const TabNavigator = () => {
         >
             <Tab.Screen name="Trang chủ" component={HomeStack} />
             <Tab.Screen name="Sổ đỏ" component={SoDoScreen} />
-            <Tab.Screen name="Cài đặt" component={SettingsScreen} />
+            <Tab.Screen name="Quy hoạch" component={PlanningScreen} />
+            <Tab.Screen name="Cài đặt" component={SettingsStack} />
         </Tab.Navigator>
     );
 };

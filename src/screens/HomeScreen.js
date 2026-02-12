@@ -70,6 +70,12 @@ const HomeScreen = () => {
     const handleScan = async () => {
         setIsScanning(true);
         const savedUri = await pickImageAndSave();
+
+        if (!savedUri) {
+            setIsScanning(false);
+            return;
+        }
+
         const text = await exrtactTextFromImage(savedUri);
         setIsScanning(false);
 
@@ -138,6 +144,16 @@ const HomeScreen = () => {
             navigation.navigate('Map', { mapData });
         }
     };
+
+    const handleImport = () => {
+        setEditText('');
+        setEditModalVisible(true);
+    };
+
+    const openHelpVideo = () => {
+        Linking.openURL('https://www.youtube.com/watch?v=fig3E44MFM4');
+    };
+
 
     const handleSaveProject = async (saveTitle) => {
         try {
@@ -304,6 +320,7 @@ const HomeScreen = () => {
                         </TouchableOpacity>
                     </View>
 
+
                     <TouchableOpacity
                         style={[styles.fullWidthButton, styles.greenButton, { marginTop: 5 }]}
                         onPress={() => setSaveModalVisible(true)}
@@ -408,10 +425,29 @@ const styles = StyleSheet.create({
     orangeButton: {
         backgroundColor: '#F97316',
     },
+    purpleButton: {
+        backgroundColor: '#8B5CF6',
+    },
     buttonText: {
         color: '#FFF',
         fontSize: 14,
         fontWeight: '700',
+    },
+    importButton: {
+        backgroundColor: '#F59E0B', // Amber/Orange for Import
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 8,
+        marginHorizontal: 5,
+        elevation: 2,
+        shadowColor: '#F59E0B',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+    },
+    helpButton: {
+        marginLeft: 5,
+        padding: 4,
     }
 });
 

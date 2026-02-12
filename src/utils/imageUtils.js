@@ -78,7 +78,7 @@ export const exrtactTextFromImage = async (imageUri) => {
         const result = await TextRecognition.recognize(imageUri);
 
         if (result && result.text) {
-            const filteredLines = result.text.split('\n').map(line => {
+            const filteredLines = result.text.split(/\s+/).map(line => {
                 const matches = line.match(/[\d.,]+/g);
                 if (!matches) return null;
 

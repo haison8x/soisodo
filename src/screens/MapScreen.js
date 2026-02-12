@@ -12,8 +12,8 @@ import MapLibre, {
     setConnected
 } from '@maplibre/maplibre-react-native';
 import * as Location from 'expo-location';
-import { useRoute } from '@react-navigation/native';
-import { Layers, Target, Plus, Minus, Map as MapIcon, Share2, MapPin, Save } from 'lucide-react-native';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import { Layers, Target, Plus, Minus, Map as MapIcon, Share2, MapPin, Save, FileSearch } from 'lucide-react-native';
 import SaveProjectModal from '../components/HomeScreen/SaveProjectModal';
 import { CITIES } from '../constants/mockDataHomeScreen';
 import { Buffer } from 'buffer';
@@ -33,6 +33,7 @@ const STYLES = [
 
 const MapScreen = () => {
     const route = useRoute();
+    const navigation = useNavigation();
     const mapData = route.params?.mapData;
     const cameraRef = useRef(null);
     const [saveModalVisible, setSaveModalVisible] = useState(false);
