@@ -6,6 +6,23 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system';
 import { useNavigation } from '@react-navigation/native';
 
+import {
+    initConnection,
+    purchaseErrorListener,
+    purchaseUpdatedListener,
+    getProducts,
+    requestPurchase,
+    getAvailablePurchases,
+    finishTransaction,
+    endConnection,
+    flushFailedPurchasesCachedAsPendingAndroid
+} from 'react-native-iap';
+
+const itemSkus = Platform.select({
+    android: ['remove_ads'],
+    ios: ['remove_ads'],
+});
+
 const SettingsScreen = () => {
     const navigation = useNavigation();
     const [isPremium, setIsPremium] = useState(false);
@@ -14,6 +31,59 @@ const SettingsScreen = () => {
     useEffect(() => {
         checkPremiumStatus();
         calculateCacheSize();
+
+        let purchaseUpdateSubscription;
+        let purchaseErrorSubscription;
+
+        const initIAP = async () => {
+            try {
+                await initConnection();
+                if (Platform.OS === 'android') {
+                    await flushFailedPurchasesCachedAsPendingAndroid();
+                }
+
+                // Get products to ensure they are available
+                await getProducts({ skus: itemSkus });
+
+                purchaseUpdateSubscription = purchaseUpdatedListener(async (purchase) => {
+                    const receipt = purchase.transactionReceipt;
+                    if (receipt) {
+                        try {
+                            // In a real production app, you should validate the receipt on your server here.
+                            // For simplicity, we trust the local receipt and mark as premium.
+                            await AsyncStorage.setItem('is_premium', 'true');
+                            setIsPremium(true);
+                            await finishTransaction({ purchase, isConsumable: false });
+                            Alert.alert('Thành công', 'Cảm ơn bạn đã ủng hộ! Gói Premium của bạn đã được kích hoạt.');
+                        } catch (ackErr) {
+                            console.warn('ackErr', ackErr);
+                        }
+                    }
+                });
+
+                purchaseErrorSubscription = purchaseErrorListener((error) => {
+                    console.warn('purchaseErrorListener', error);
+                    if (error.code !== 'E_USER_CANCELLED') {
+                        Alert.alert('Lỗi mua hàng', error.message);
+                    }
+                });
+
+            } catch (err) {
+                console.warn('initIAP error', err);
+            }
+        };
+
+        initIAP();
+
+        return () => {
+            if (purchaseUpdateSubscription) {
+                purchaseUpdateSubscription.remove();
+            }
+            if (purchaseErrorSubscription) {
+                purchaseErrorSubscription.remove();
+            }
+            endConnection();
+        }
     }, []);
 
     const checkPremiumStatus = async () => {
@@ -80,42 +150,39 @@ const SettingsScreen = () => {
             return;
         }
 
-        // Simulate purchase flow
-        Alert.alert(
-            "Xác nhận mua hàng",
-            "Mua gói Premium với giá 99.000đ để xóa quảng cáo vĩnh viễn?",
-            [
-                { text: "Hủy", style: "cancel" },
-                {
-                    text: "Mua ngay",
-                    onPress: async () => {
-                        try {
-                            await AsyncStorage.setItem('is_premium', 'true');
-                            setIsPremium(true);
-                            Alert.alert('Thành công', 'Cảm ơn bạn đã mua hàng! Đã kích hoạt Premium.');
-                        } catch (error) {
-                            console.error('Purchase error:', error);
-                        }
-                    }
-                }
-            ]
-        );
+        try {
+            await requestPurchase({
+                skus: ['remove_ads'],
+                andDangerouslyFinishTransactionAutomaticallyIOS: false,
+            });
+        } catch (err) {
+            console.warn(err.code, err.message);
+            if (err.code !== 'E_USER_CANCELLED') {
+                Alert.alert('Lỗi', 'Không thể thực hiện mua hàng lúc này.');
+            }
+        }
     };
 
     const handleRestorePurchase = async () => {
-        // Simulate restore flow
         try {
-            // In a real app, we would check the store receipt here.
-            // For now, we just check our local "server" (AsyncStorage) or assume success if logic dictates.
-            // If we rely purely on local storage for this mock, it's the same as checkPremiumStatus.
-            const status = await AsyncStorage.getItem('is_premium');
-            if (status === 'true') {
-                setIsPremium(true);
+            const purchases = await getAvailablePurchases();
+            let isRestored = false;
+
+            purchases.forEach(async (purchase) => {
+                if (purchase.productId === 'remove_ads') {
+                    await AsyncStorage.setItem('is_premium', 'true');
+                    setIsPremium(true);
+                    isRestored = true;
+                }
+            });
+
+            if (isRestored) {
                 Alert.alert('Khôi phục thành công', 'Gói Premium của bạn đã được khôi phục.');
             } else {
                 Alert.alert('Thông báo', 'Không tìm thấy giao dịch mua hàng nào trước đây.');
             }
         } catch (error) {
+            console.warn('Restore error', error);
             Alert.alert('Lỗi', 'Không thể khôi phục mua hàng lúc này.');
         }
     };

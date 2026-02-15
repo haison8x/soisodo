@@ -9,6 +9,7 @@ pnpm dlx eas-cli build --platform android --profile production
 # Build Android
 pnpm expo prebuild --platform android --clean
 pnpm expo run:android
+pnpm dlx eas-cli credentials --platform android
 
 # Build iOS
 pnpm expo prebuild --platform ios --clean
