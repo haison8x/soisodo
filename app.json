@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Soi Tọa Độ - Xem đất trên bản đồ",
+    "name": "SoiToaDoVN",
     "slug": "soitoadovn",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -21,7 +21,10 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.tranhiepgold.soitoadovn"
+      "package": "com.tranhiepgold.soitoadovn",
+      "permissions": [
+        "com.android.vending.BILLING"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"

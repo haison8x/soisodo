@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Platform, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MapView, Camera, ShapeSource, CircleLayer } from '@maplibre/maplibre-react-native';
 import { ArrowLeft, MapPin, Plus, Minus, Layers, Map as MapIcon, Target } from 'lucide-react-native';
@@ -64,6 +64,22 @@ const ConvertGoogleScreen = ({ route, navigation }) => {
         }
     };
 
+    const openGoogleMaps = () => {
+        const url = Platform.OS === 'ios'
+            ? `maps://0,0?q=${latitude},${longitude}`
+            : `geo:0,0?q=${latitude},${longitude}(Vị trí)`;
+
+        const webUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+
+        Linking.canOpenURL(url).then(supported => {
+            if (supported) {
+                Linking.openURL(url);
+            } else {
+                Linking.openURL(webUrl);
+            }
+        }).catch(() => Linking.openURL(webUrl));
+    };
+
     return (
         <View style={styles.container}>
             <View style={[styles.header, { paddingTop: insets.top }]}>
@@ -125,6 +141,10 @@ const ConvertGoogleScreen = ({ route, navigation }) => {
                 <TouchableOpacity style={styles.glassBtn} onPress={toggleStyle}>
                     {STYLES[styleIndex].icon}
                     <Text style={styles.btnLabel}>{STYLES[styleIndex].name}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.glassBtn} onPress={openGoogleMaps}>
+                    <MapPin size={22} color="#FFFFFF" />
+                    <Text style={styles.btnLabel}>Google Map</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.glassBtn} onPress={recenter}>
                     <Target size={22} color="#FFFFFF" />
