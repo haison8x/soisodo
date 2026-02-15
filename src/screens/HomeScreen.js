@@ -30,10 +30,12 @@ import { pickImageAndSave, exrtactTextFromImage } from '../utils/imageUtils';
 import { toMapPoints } from '../utils/point';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { getAddressFromCoordinates } from '../utils/geocoding';
+import { useInterstitialAd } from '../hooks/useInterstitialAd';
 
 const HomeScreen = () => {
     const navigation = useNavigation();
     const route = useRoute();
+    const { showAd } = useInterstitialAd();
     const [title, setTitle] = useState('Nhà Tôi');
     const [selectedCity, setSelectedCity] = useState(CITIES.find(c => c.label === "Hồ Chí Minh"));
     const [modalVisible, setModalVisible] = useState(false);
@@ -141,7 +143,9 @@ const HomeScreen = () => {
     const handleViewMap = () => {
         if (coordinates.length > 0) {
             const mapData = toMapPoints(title, selectedCity.value, coordinates);
-            navigation.navigate('Map', { mapData });
+            showAd(() => {
+                navigation.navigate('Map', { mapData });
+            });
         }
     };
 
@@ -221,7 +225,7 @@ const HomeScreen = () => {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={{ flex: 1 }}
             >
-                <ScrollView style={styles.scrollView} contentContainerStyle={{ paddingBottom: 100 }}>
+                <ScrollView style={styles.scrollView} contentContainerStyle={{ paddingBottom: 220 }}>
                     <ProjectTitleInput value={title} onChangeText={setTitle} />
 
                     <CitySelector

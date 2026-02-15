@@ -130,7 +130,7 @@ const ConvertGoogleScreen = ({ route, navigation }) => {
             </MapView>
 
             {/* Floating Controls */}
-            <View style={[styles.sideControls, { bottom: insets.bottom + 120 }]}>
+            <View style={[styles.sideControls, { bottom: insets.bottom + 320 }]}>
                 <TouchableOpacity style={styles.glassBtn} onPress={() => changeZoom(1)}>
                     <Plus size={22} color="#FFFFFF" />
                 </TouchableOpacity>
@@ -151,7 +151,7 @@ const ConvertGoogleScreen = ({ route, navigation }) => {
                 </TouchableOpacity>
             </View>
 
-            <View style={[styles.infoCard, { paddingBottom: insets.bottom + 20 }]}>
+            <View style={[styles.infoCard, { paddingBottom: insets.bottom + 220 }]}>
                 <Text style={styles.coordinatesText}>
                     {latitude.toFixed(6)}, {longitude.toFixed(6)}
                 </Text>

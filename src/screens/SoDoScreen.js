@@ -5,10 +5,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { FileText, Trash2, Map, Calendar, ChevronRight, Edit3, MapPin } from 'lucide-react-native';
 import { toMapPoints } from '../utils/point';
+import { useInterstitialAd } from '../hooks/useInterstitialAd';
 
 const SoDoScreen = () => {
     const [projects, setProjects] = useState([]);
     const navigation = useNavigation();
+    const { showAd } = useInterstitialAd();
 
     const loadProjects = useCallback(async () => {
         try {
@@ -52,9 +54,11 @@ const SoDoScreen = () => {
 
     const viewProject = (project) => {
         const mapData = toMapPoints(project.title, project.cityValue, project.coordinates);
-        navigation.navigate('Trang chủ', {
-            screen: 'Map',
-            params: { mapData }
+        showAd(() => {
+            navigation.navigate('Trang chủ', {
+                screen: 'Map',
+                params: { mapData }
+            });
         });
     };
 
@@ -165,7 +169,7 @@ const styles = StyleSheet.create({
     },
     listContent: {
         padding: 16,
-        paddingBottom: 100,
+        paddingBottom: 220,
     },
     projectCard: {
         backgroundColor: '#FFFFFF',

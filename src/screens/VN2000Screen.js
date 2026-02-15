@@ -4,9 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Compass, Info, MapPin, ChevronDown, Check, X, Search } from 'lucide-react-native';
 import { proj4Dict, convertVN2000ToWGS84 } from '../utils/point';
 import { useNavigation } from '@react-navigation/native';
+import { useInterstitialAd } from '../hooks/useInterstitialAd';
 
 const VN2000Screen = () => {
     const navigation = useNavigation();
+    const { showAd } = useInterstitialAd();
     const [xCoord, setXCoord] = useState('1199306.130');
     const [yCoord, setYCoord] = useState('596566.070');
     const [selectedProvince, setSelectedProvince] = useState({ "key": "EPSG:_TP-Hồ-Chí-Minh", "label": "TP Hồ Chí Minh" });
@@ -47,9 +49,11 @@ const VN2000Screen = () => {
 
     const handleViewOnMap = () => {
         if (result) {
-            navigation.navigate('ConvertGoogle', {
-                latitude: result.latitude,
-                longitude: result.longitude
+            showAd(() => {
+                navigation.navigate('ConvertGoogle', {
+                    latitude: result.latitude,
+                    longitude: result.longitude
+                });
             });
         }
     };
@@ -226,6 +230,7 @@ const styles = StyleSheet.create({
     },
     content: {
         padding: 20,
+        paddingBottom: 220,
     },
     card: {
         width: '100%',

@@ -240,7 +240,7 @@ const SettingsScreen = () => {
                 <Text style={styles.headerTitle}>Cài đặt</Text>
             </View>
 
-            <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+            <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 220 }} showsVerticalScrollIndicator={false}>
 
                 {renderSectionHeader('Hỗ trợ')}
                 <View style={styles.sectionContainer}>

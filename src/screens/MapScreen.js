@@ -408,7 +408,7 @@ const styles = StyleSheet.create({
     },
     sideControls: {
         position: 'absolute',
-        bottom: 100,
+        bottom: 320,
         right: 16,
         gap: 10,
     },

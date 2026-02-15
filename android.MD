@@ -37,17 +37,17 @@ pnpm android
 1. Short Description (Mô tả ngắn)
 Giới hạn 80 ký tự - Tập trung vào giá trị cốt lõi
 
-Soi tọa độ, chuyển đổi VN2000 và kiểm tra vị trí đất đai chính xác trên bản đồ.
+Định vị nhà đất, chuyển đổi VN2000 và kiểm tra vị trí đất đai chính xác trên bản đồ.
 
 
 2. Full Description (Mô tả chi tiết)
 Tập trung vào tính năng, SEO và lợi ích người dùng
 
-Tiêu đề ứng dụng: Soi Tọa Độ - Xem đất trên bản đồ
+Tiêu đề ứng dụng: Định Vị Nhà Đất - VN2000
 
 Nội dung:
 
-Bạn là nhà đầu tư bất động sản, khảo sát viên hay đơn giản là muốn tìm kiếm vị trí chính xác của một thửa đất từ sổ đỏ? Soi Tọa Độ là ứng dụng chuyên biệt giúp bạn kết nối dữ liệu tọa độ kỹ thuật với thực địa bản đồ một cách nhanh chóng và chính xác nhất.
+Bạn là nhà đầu tư bất động sản, khảo sát viên hay đơn giản là muốn tìm kiếm vị trí chính xác của một thửa đất từ sổ đỏ? Định Vị Nhà Đất - VN2000 là ứng dụng chuyên biệt giúp bạn kết nối dữ liệu tọa độ kỹ thuật với thực địa bản đồ một cách nhanh chóng và chính xác nhất.
 
 Các tính năng nổi bật:
 
@@ -64,9 +64,9 @@ Các tính năng nổi bật:
 Chỉ đường trực tiếp qua Google Maps.
 Lưu trữ và quản lý danh sách các điểm tọa độ đã xem.
 Độ chính xác cao, xử lý dữ liệu tức thì.
-Tại sao nên chọn Soi Tọa Độ? Ứng dụng được thiết kế đơn giản, tập trung vào tính chính xác, giúp loại bỏ các sai sót khi nhập liệu và tra cứu thủ công. Đây là công cụ không thể thiếu cho:
+Tại sao nên chọn Định Vị Nhà Đất - VN2000? Ứng dụng được thiết kế đơn giản, tập trung vào tính chính xác, giúp loại bỏ các sai sót khi nhập liệu và tra cứu thủ công. Đây là công cụ không thể thiếu cho:
 
 Môi giới và nhà đầu tư bất động sản.
 Khảo sát viên địa chính.
 Người dân muốn kiểm tra vị trí đất đai tại nhà.
-Tải ngay Soi Tọa Độ để làm chủ dữ liệu đất đai trong tầm tay!
+Tải ngay Định Vị Nhà Đất - VN2000 để làm chủ dữ liệu đất đai trong tầm tay!

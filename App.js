@@ -3,14 +3,27 @@ import { NavigationContainer } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import TabNavigator from './src/navigation/TabNavigator';
 import { StatusBar } from 'expo-status-bar';
+import mobileAds from 'react-native-google-mobile-ads';
+
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+
+// Initialize Ads
+mobileAds()
+  .initialize()
+  .then(adapterStatuses => {
+    // Initialization complete!
+    console.log('Ads initialized');
+  });
 
 export default function App() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <NavigationContainer>
-        <StatusBar style="auto" />
-        <TabNavigator />
-      </NavigationContainer>
-    </GestureHandlerRootView>
+    <SafeAreaProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <NavigationContainer>
+          <StatusBar style="auto" />
+          <TabNavigator />
+        </NavigationContainer>
+      </GestureHandlerRootView>
+    </SafeAreaProvider>
   );
 }
