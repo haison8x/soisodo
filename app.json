@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "SoiToaDoVN",
+    "name": "Định Vị Nhà Đất - VN2000",
     "slug": "soitoadovn",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -23,7 +23,9 @@
       "edgeToEdgeEnabled": true,
       "package": "com.tranhiepgold.soitoadovn",
       "permissions": [
-        "com.android.vending.BILLING"
+        "com.android.vending.BILLING",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
       ]
     },
     "web": {
@@ -38,6 +40,11 @@
         }
       ],
       "@maplibre/maplibre-react-native"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "f07e8945-8540-47db-babb-95e9799167d8"
+      }
+    }
   }
 }

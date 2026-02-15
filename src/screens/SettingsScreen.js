@@ -200,13 +200,16 @@ const SettingsScreen = () => {
                         </View>
                     ) : (
                         <TouchableOpacity style={styles.purchaseItem} onPress={handlePurchase}>
-                            <View style={styles.purchaseHeader}>
-                                <ShoppingCart size={22} color="#007AFF" />
-                                <Text style={styles.purchaseTitle}>Mua hàng [In-App Billing]</Text>
+                            <View style={styles.itemLeft}>
+                                <View style={styles.iconContainer}>
+                                    <ShoppingCart size={22} color="#007AFF" />
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={styles.purchaseTitle}>Mua hàng [In-App Billing]</Text>
+                                    <Text style={styles.itemSubtitle}>Mua 1 lần xóa quảng cáo vĩnh viễn</Text>
+                                </View>
+                                <Text style={styles.purchasePrice}>99.000 đ</Text>
                             </View>
-                            <Text style={styles.purchaseDesc}>Mua 1 lần xóa quảng cáo vĩnh viễn</Text>
-                            <Text style={styles.purchaseDesc}>Hiển thị Tick xanh khi bình luận</Text>
-                            <Text style={styles.purchasePrice}>₫99.000</Text>
                         </TouchableOpacity>
                     )}
 
@@ -329,29 +332,16 @@ const styles = StyleSheet.create({
     purchaseItem: {
         padding: 16,
     },
-    purchaseHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 8,
-    },
     purchaseTitle: {
         fontSize: 17,
         fontWeight: '600',
         color: '#007AFF',
-        marginLeft: 10,
-    },
-    purchaseDesc: {
-        fontSize: 15,
-        color: '#333',
-        marginBottom: 4,
-        marginLeft: 32,
     },
     purchasePrice: {
         fontSize: 17,
-        fontWeight: '600',
+        fontWeight: '700',
         color: '#000',
-        textAlign: 'right',
-        marginTop: 8,
+        marginLeft: 8,
     },
     premiumContainer: {
         flexDirection: 'row',
