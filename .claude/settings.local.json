@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell.exe *)",
+      "Bash(grep -oE \"'#[A-Fa-f0-9]{3,8}'\")",
+      "Bash(pnpm add *)",
+      "Bash(npx tsc *)",
+      "Bash(grep -r \"'#[A-Fa-f0-9]\\\\{3,8\\\\}'\" src/ --include=\"*.tsx\" --include=\"*.ts\")"
+    ]
+  }
+}
