@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, StyleSheet, Text, ScrollView, TouchableOpacity, Linking } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Linking, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
-import { Globe, Smartphone, Info, Map as MapIcon } from 'lucide-react-native';
-import { Colors, Spacing, Typography, Radius, Shadows } from '../theme';
+import { Globe, Smartphone, Info, Map as MapIcon, ChevronRight } from 'lucide-react-native';
+import { useTheme } from '../theme/ThemeProvider';
 
 interface PlanningItem {
   province: string;
@@ -58,144 +58,229 @@ const PLANNING_DATA: PlanningItem[] = [
   },
 ];
 
-const PlanningScreen = () => {
-  const tabBarHeight = useBottomTabBarHeight();
+const getDomain = (url: string): string => {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return url;
+  }
+};
 
-  const renderCard = (item: PlanningItem, index: number) => (
-    <View key={index} style={styles.card}>
+const openURL = (url: string) => Linking.openURL(url).catch(() => null);
+
+const openAppSearch = (appName: string) => {
+  const q = encodeURIComponent(appName);
+  const url = Platform.OS === 'ios'
+    ? `https://apps.apple.com/search?term=${q}&country=vn`
+    : `https://play.google.com/store/search?q=${q}&hl=vi`;
+  openURL(url);
+};
+
+const PlanningCard = ({ item }: { item: PlanningItem }) => {
+  const t = useTheme();
+  const hasActions = !!(item.web || item.app);
+
+  return (
+    <View style={[styles.card, { backgroundColor: t.colors.surface }, t.shadow.sm]}>
+      {/* Province badge + name */}
       <View style={styles.cardHeader}>
-        <View style={styles.provinceBadge}>
-          <Text style={styles.provinceText}>{item.province}</Text>
+        <View style={[styles.provinceBadge, { backgroundColor: t.colors.fillSecondary, borderRadius: t.radius.sm }]}>
+          <Text style={[t.typography.caption2, styles.provinceBadgeText, { color: t.colors.labelSecondary, fontFamily: t.fontFamily }]}>
+            {item.province.toUpperCase()}
+          </Text>
         </View>
-        <Text style={styles.appName}>{item.name}</Text>
+        <Text
+          style={[t.typography.headline, { color: t.colors.label, fontFamily: t.fontFamily }]}
+          accessibilityRole="header"
+          numberOfLines={2}
+        >
+          {item.name}
+        </Text>
       </View>
 
-      <View style={styles.cardBody}>
-        {item.web && (
-          <TouchableOpacity style={styles.infoRow} onPress={() => item.web && Linking.openURL(item.web)}>
-            <Globe size={16} color={Colors.primary} />
-            <Text style={styles.infoLabel}>Web:</Text>
-            <Text style={styles.infoValue} numberOfLines={1}>
-              {item.web}
+      {hasActions && <View style={[styles.divider, { backgroundColor: t.colors.separator }]} />}
+
+      {/* Website row — iOS Settings link style */}
+      {item.web && (
+        <Pressable
+          style={({ pressed }) => [
+            styles.actionRow,
+            pressed && Platform.OS === 'ios' && { opacity: 0.6 },
+          ]}
+          android_ripple={{ color: t.colors.fillTertiary }}
+          onPress={() => openURL(item.web!)}
+          accessibilityRole="link"
+          accessibilityLabel={`Mở website ${item.name}: ${getDomain(item.web)}`}
+        >
+          <Globe size={17} color={t.colors.primary} />
+          <View style={styles.actionContent}>
+            <Text style={[t.typography.callout, { color: t.colors.label, fontFamily: t.fontFamily }]}>
+              Mở website
             </Text>
-          </TouchableOpacity>
-        )}
-
-        {item.app && (
-          <View style={styles.infoRow}>
-            <Smartphone size={16} color={Colors.success} />
-            <Text style={styles.infoLabel}>App:</Text>
-            <Text style={styles.infoValuePlain}>{item.app}</Text>
+            <Text style={[t.typography.caption1, { color: t.colors.labelTertiary, fontFamily: t.fontFamily, marginTop: 1 }]} numberOfLines={1}>
+              {getDomain(item.web)}
+            </Text>
           </View>
-        )}
+          <ChevronRight size={16} color={t.colors.labelTertiary} />
+        </Pressable>
+      )}
 
-        <View style={styles.divider} />
+      {/* Indented separator between two action rows */}
+      {item.web && item.app && (
+        <View style={[styles.divider, { backgroundColor: t.colors.separator, marginLeft: 43 }]} />
+      )}
 
-        <View style={styles.featureRow}>
-          <Info size={16} color={Colors.textTertiary} />
-          <Text style={styles.featureText}>{item.features}</Text>
-        </View>
+      {/* App store row — tappable, opens App Store / CH Play search */}
+      {item.app && (
+        <Pressable
+          style={({ pressed }) => [
+            styles.actionRow,
+            pressed && Platform.OS === 'ios' && { opacity: 0.6 },
+          ]}
+          android_ripple={{ color: t.colors.fillTertiary }}
+          onPress={() => openAppSearch(item.app!)}
+          accessibilityRole="button"
+          accessibilityLabel={`Tìm ứng dụng ${item.app} trên cửa hàng ứng dụng`}
+        >
+          <Smartphone size={17} color={t.colors.success} />
+          <View style={styles.actionContent}>
+            <Text style={[t.typography.callout, { color: t.colors.label, fontFamily: t.fontFamily }]}>
+              {item.app}
+            </Text>
+            <Text style={[t.typography.caption1, { color: t.colors.labelTertiary, fontFamily: t.fontFamily, marginTop: 1 }]}>
+              {Platform.OS === 'ios' ? 'Tìm trên App Store' : 'Tìm trên CH Play'}
+            </Text>
+          </View>
+          <ChevronRight size={16} color={t.colors.labelTertiary} />
+        </Pressable>
+      )}
+
+      {/* Feature note */}
+      <View style={[styles.divider, { backgroundColor: t.colors.separator }]} />
+      <View style={styles.featureRow}>
+        <Info size={14} color={t.colors.labelTertiary} style={{ marginTop: 1 }} />
+        <Text style={[t.typography.footnote, styles.featureText, { color: t.colors.labelSecondary, fontFamily: t.fontFamily }]}>
+          {item.features}
+        </Text>
       </View>
     </View>
   );
+};
+
+const PlanningScreen = () => {
+  const t = useTheme();
+  const tabBarHeight = useBottomTabBarHeight();
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerTitle}>Tra cứu Quy hoạch</Text>
-        </View>
+    <SafeAreaView style={[styles.container, { backgroundColor: t.colors.backgroundGrouped }]} edges={['top']}>
+      <View style={[styles.header, { backgroundColor: t.colors.surface, borderBottomColor: t.colors.separator }]}>
+        <Text style={[t.typography.title2, { color: t.colors.label, fontFamily: t.fontFamily }]}>
+          Tra cứu Quy hoạch
+        </Text>
       </View>
 
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + Spacing.lg }]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + t.spacing.base }]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.introCard}>
-          <MapIcon size={32} color="#8B5CF6" />
-          <Text style={styles.introText}>
-            Dưới đây là danh sách các cổng thông tin và ứng dụng quy hoạch chính thức của các tỉnh
-            thành. Bạn có thể tìm kiếm các ứng dụng này trên App Store hoặc CH Play.
+        {/* Intro banner — primary tint, icon in rounded square */}
+        <View style={[styles.introBanner, { backgroundColor: t.colors.primaryLight, borderRadius: t.radius.lg }]}>
+          <View style={[styles.introIconWrap, { backgroundColor: t.colors.fillPrimary, borderRadius: t.radius.md }]}>
+            <MapIcon size={24} color={t.colors.primary} />
+          </View>
+          <Text style={[t.typography.callout, { color: t.colors.label, flex: 1, fontFamily: t.fontFamily }]}>
+            Danh sách cổng thông tin và ứng dụng quy hoạch chính thức. Nhấn để truy cập hoặc tìm trên{' '}
+            <Text style={{ fontWeight: '600' }}>
+              {Platform.OS === 'ios' ? 'App Store' : 'CH Play'}
+            </Text>.
           </Text>
         </View>
 
-        {PLANNING_DATA.map((item, index) => renderCard(item, index))}
+        {PLANNING_DATA.map((item, index) => (
+          <PlanningCard key={index} item={item} />
+        ))}
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Thông tin được tổng hợp cho mục đích tham khảo.</Text>
-        </View>
+        <Text style={[t.typography.caption1, styles.footer, { color: t.colors.labelTertiary, fontFamily: t.fontFamily }]}>
+          Thông tin được tổng hợp cho mục đích tham khảo.
+        </Text>
       </ScrollView>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+  container: { flex: 1 },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: 15,
-    backgroundColor: Colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.surfaceSecondary,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  headerTitleContainer: { flex: 1 },
-  headerTitle: { fontSize: Typography.fontSizes.xxl - 2, fontWeight: Typography.fontWeights.heavy, color: Colors.textPrimary },
   scrollView: { flex: 1 },
-  scrollContent: { padding: Spacing.xl },
-  introCard: {
-    backgroundColor: Colors.primaryLight,
-    padding: Spacing.xl,
-    borderRadius: Radius.xl,
-    marginBottom: 25,
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    gap: 12,
+  },
+  introBanner: {
+    padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
   },
-  introText: { flex: 1, marginLeft: 15, fontSize: Typography.fontSizes.md, color: Colors.textPrimary, lineHeight: 20 },
+  introIconWrap: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
   card: {
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.md,
-    marginBottom: Spacing.xl,
-    padding: Spacing.xl,
-    borderWidth: 1,
-    borderColor: Colors.surfaceSecondary,
-    ...Shadows.sm,
+    borderRadius: 12,
+    overflow: 'hidden',
   },
-  cardHeader: { marginBottom: 15 },
+  cardHeader: {
+    padding: 16,
+    gap: 6,
+  },
   provinceBadge: {
-    backgroundColor: Colors.surfaceSecondary,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 4,
-    borderRadius: Radius.sm,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     alignSelf: 'flex-start',
-    marginBottom: Spacing.sm,
   },
-  provinceText: {
-    fontSize: Typography.fontSizes.sm,
-    fontWeight: Typography.fontWeights.bold,
-    color: Colors.textSecondary,
-    textTransform: 'uppercase',
+  provinceBadgeText: {
+    letterSpacing: 0.4,
+    fontWeight: '600',
   },
-  appName: { fontSize: Typography.fontSizes.lg + 1, fontWeight: Typography.fontWeights.bold, color: Colors.textPrimary },
-  cardBody: { gap: Spacing.md },
-  infoRow: { flexDirection: 'row', alignItems: 'center' },
-  infoLabel: { fontSize: Typography.fontSizes.md, fontWeight: Typography.fontWeights.semibold, color: Colors.textSecondary, marginLeft: Spacing.sm, width: 45 },
-  infoValue: { fontSize: Typography.fontSizes.md, color: Colors.primary, flex: 1 },
-  infoValuePlain: { fontSize: Typography.fontSizes.md, color: Colors.textPrimary, flex: 1 },
-  divider: { height: 1, backgroundColor: Colors.surfaceSecondary, marginVertical: 4 },
-  featureRow: { flexDirection: 'row', alignItems: 'flex-start' },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 11,
+    minHeight: 44,
+    gap: 10,
+  },
+  actionContent: {
+    flex: 1,
+  },
+  featureRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 8,
+  },
   featureText: {
-    fontSize: Typography.fontSizes.md,
-    color: Colors.textSecondary,
-    marginLeft: Spacing.sm,
     flex: 1,
     fontStyle: 'italic',
-    lineHeight: 20,
   },
-  footer: { marginTop: Spacing.sm, alignItems: 'center' },
-  footerText: { fontSize: Typography.fontSizes.sm, color: Colors.textTertiary, textAlign: 'center' },
+  footer: {
+    textAlign: 'center',
+    paddingVertical: 8,
+  },
 });
 
 export default PlanningScreen;

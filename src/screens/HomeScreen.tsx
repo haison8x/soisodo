@@ -3,11 +3,12 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
+  Pressable,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
@@ -27,9 +28,9 @@ import { toMapPoints } from '../utils/point';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { getAddressFromCoordinates } from '../utils/geocoding';
 import { useInterstitialAd } from '../hooks/useInterstitialAd';
-import { Colors, Spacing, Typography, Radius } from '../theme';
 import { useToast } from '../components/shared/ToastProvider';
 import { triggerMedium, triggerSuccess } from '../utils/haptics';
+import { useTheme } from '../theme/ThemeProvider';
 import type { City, Coordinate, Project } from '../types';
 
 const HomeScreen = () => {
@@ -38,6 +39,7 @@ const HomeScreen = () => {
   const { showAd } = useInterstitialAd();
   const tabBarHeight = useBottomTabBarHeight();
   const { showToast } = useToast();
+  const t = useTheme();
 
   const [title, setTitle] = useState('Nhà Tôi');
   const [selectedCity, setSelectedCity] = useState<City>(
@@ -50,6 +52,7 @@ const HomeScreen = () => {
   const [coordinates, setCoordinates] = useState<Coordinate[]>(INITIAL_COORDINATES);
   const [isScanning, setIsScanning] = useState(false);
   const [saveModalVisible, setSaveModalVisible] = useState(false);
+  const [isViewingMap, setIsViewingMap] = useState(false);
 
   const [newX, setNewX] = useState('');
   const [newY, setNewY] = useState('');
@@ -66,16 +69,15 @@ const HomeScreen = () => {
       if (pCoords && Array.isArray(pCoords)) setCoordinates(pCoords);
       navigation.setParams({ projectData: undefined } as never);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [(route.params as { projectData?: Project } | undefined)?.projectData]);
 
   const handleScan = async () => {
     setIsScanning(true);
     const savedUri = await pickImageAndSave();
     if (!savedUri) { setIsScanning(false); return; }
-
     const text = await exrtactTextFromImage(savedUri);
     setIsScanning(false);
-
     if (text) {
       setEditText(text);
       setEditModalVisible(true);
@@ -99,27 +101,28 @@ const HomeScreen = () => {
 
   const handleSaveEdit = (text: string) => {
     if (!text.trim()) { setCoordinates([]); return; }
-    const tokens = text.trim().split(/\s+/).filter(t => t !== '');
-    const newCoordinates: Coordinate[] = [];
+    const tokens = text.trim().split(/\s+/).filter(tok => tok !== '');
+    const newCoords: Coordinate[] = [];
     for (let i = 0; i < tokens.length - 1; i += 2) {
-      newCoordinates.push({ id: nanoid(), x: tokens[i], y: tokens[i + 1] });
+      newCoords.push({ id: nanoid(), x: tokens[i], y: tokens[i + 1] });
     }
-    if (newCoordinates.length > 0) setCoordinates(newCoordinates);
+    if (newCoords.length > 0) setCoordinates(newCoords);
   };
 
   const swapXY = () => {
     setCoordinates(prev => prev.map(coord => ({ ...coord, x: coord.y, y: coord.x })));
-    const tempX = newX;
-    setNewX(newY);
-    setNewY(tempX);
+    const tmp = newX; setNewX(newY); setNewY(tmp);
   };
 
   const handleViewMap = () => {
-    if (coordinates.length > 0) {
-      triggerMedium();
-      const mapData = toMapPoints(title, selectedCity.value, coordinates);
-      showAd(() => navigation.navigate('Map' as never, { mapData } as never));
-    }
+    if (coordinates.length === 0) return;
+    setIsViewingMap(true);
+    triggerMedium();
+    const mapData = toMapPoints(title, selectedCity.value, coordinates);
+    showAd(() => {
+      setIsViewingMap(false);
+      (navigation as any).navigate('Map', { mapData });
+    });
   };
 
   const handleSaveProject = async (saveTitle: string) => {
@@ -127,12 +130,11 @@ const HomeScreen = () => {
       let address = '';
       if (coordinates.length > 0) {
         const mapData = toMapPoints(title, selectedCity.value, coordinates);
-        if (mapData?.wgs84Points && mapData.wgs84Points.length > 0) {
+        if (mapData?.wgs84Points?.length) {
           const firstPoint = mapData.wgs84Points[0];
           address = (await getAddressFromCoordinates(firstPoint.latitude, firstPoint.longitude)) ?? '';
         }
       }
-
       const existingProjectsJson = await AsyncStorage.getItem('saved_projects');
       const existingProjects: Project[] = existingProjectsJson ? JSON.parse(existingProjectsJson) : [];
       const existingIndex = existingProjects.findIndex(
@@ -150,11 +152,9 @@ const HomeScreen = () => {
           createdAt: isOverwrite ? existingProjects[existingIndex].createdAt : new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
-
         const updatedProjects = isOverwrite
           ? existingProjects.map((p, i) => (i === existingIndex ? projectData : p))
           : [projectData, ...existingProjects];
-
         AsyncStorage.setItem('saved_projects', JSON.stringify(updatedProjects))
           .then(() => { triggerSuccess(); showToast('Đã lưu dự án thành công!', 'success'); })
           .catch(e => console.error(e));
@@ -168,24 +168,19 @@ const HomeScreen = () => {
       } else {
         saveData(false);
       }
-    } catch (error) {
-      console.error('Error saving project:', error);
+    } catch {
       Alert.alert('Lỗi', 'Lỗi khi lưu dự án');
     }
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
-      >
+    <SafeAreaView style={[styles.container, { backgroundColor: t.colors.surface }]} edges={['top', 'left', 'right']}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={{ paddingBottom: tabBarHeight + Spacing.lg }}
+          contentContainerStyle={{ paddingBottom: tabBarHeight + t.spacing.base }}
         >
           <ProjectTitleInput value={title} onChangeText={setTitle} />
-
           <CitySelector selectedCity={selectedCity} onPress={() => setModalVisible(true)} />
 
           <CityModal
@@ -193,14 +188,9 @@ const HomeScreen = () => {
             onClose={() => setModalVisible(false)}
             searchText={searchText}
             onSearchChange={setSearchText}
-            onSelectCity={item => {
-              setSelectedCity(item);
-              setModalVisible(false);
-              setSearchText('');
-            }}
+            onSelectCity={item => { setSelectedCity(item); setModalVisible(false); setSearchText(''); }}
             selectedCity={selectedCity}
           />
-
           <CoordinateEditModal
             visible={editModalVisible}
             onClose={() => setEditModalVisible(false)}
@@ -208,16 +198,36 @@ const HomeScreen = () => {
             initialValue={editText}
           />
 
-          <View style={styles.scanRow}>
-            <Text style={styles.scanText}>Nhập tọa độ hoặc</Text>
-            <TouchableOpacity
-              style={[styles.scanButton, isScanning && { opacity: 0.6 }]}
+          {/* Scan row */}
+          <View style={[styles.scanRow, {
+            backgroundColor: t.colors.surfaceSecondary,
+            borderRadius: t.radius.md,
+            padding: t.spacing.md,
+          }]}>
+            <Text style={[t.typography.subheadline, { color: t.colors.labelSecondary, fontFamily: t.fontFamily }]}>
+              Nhập tọa độ hoặc
+            </Text>
+            <Pressable
+              style={({ pressed }) => [
+                styles.scanButton,
+                { backgroundColor: t.colors.primary, borderRadius: t.radius.sm },
+                pressed && Platform.OS === 'ios' && { opacity: 0.75 },
+                isScanning && { opacity: 0.6 },
+              ]}
+              android_ripple={{ color: 'rgba(255,255,255,0.25)' }}
               onPress={handleScan}
               disabled={isScanning}
+              accessibilityRole="button"
+              accessibilityLabel="Quét ảnh tọa độ"
             >
-              <Text style={styles.scanButtonText}>{isScanning ? 'Đang xử lý...' : 'Scan'}</Text>
-            </TouchableOpacity>
-            <Text style={styles.scanText}>từ bộ sưu tập ảnh</Text>
+              {isScanning
+                ? <ActivityIndicator size="small" color="#fff" />
+                : <Text style={[t.typography.callout, { color: '#fff', fontWeight: '700', fontFamily: t.fontFamily }]}>Scan</Text>
+              }
+            </Pressable>
+            <Text style={[t.typography.subheadline, { color: t.colors.labelSecondary, fontFamily: t.fontFamily }]}>
+              từ bộ sưu tập ảnh
+            </Text>
           </View>
 
           {coordinates.map((coord, index) => (
@@ -230,19 +240,38 @@ const HomeScreen = () => {
             />
           ))}
 
-          <View style={styles.actionRow}>
-            <TouchableOpacity
-              style={[styles.button, styles.secondaryButton]}
-              onPress={() => {
-                setEditText(formatCoordinatesForEdit());
-                setEditModalVisible(true);
-              }}
+          {/* Utility action row — both neutral secondary style, not warning orange */}
+          <View style={[styles.actionRow, { marginVertical: t.spacing.base }]}>
+            <Pressable
+              style={({ pressed }) => [styles.halfButton, {
+                backgroundColor: t.colors.surfaceSecondary,
+                borderRadius: t.radius.md,
+                opacity: pressed && Platform.OS === 'ios' ? 0.75 : 1,
+              }]}
+              android_ripple={{ color: t.colors.fillTertiary }}
+              onPress={() => { setEditText(formatCoordinatesForEdit()); setEditModalVisible(true); }}
+              accessibilityRole="button"
+              accessibilityLabel="Sửa tọa độ X và Y"
             >
-              <Text style={styles.secondaryButtonText}>Sửa X&Y</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.button, styles.warningButton]} onPress={swapXY}>
-              <Text style={styles.buttonText}>Hoán đổi X↔Y</Text>
-            </TouchableOpacity>
+              <Text style={[t.typography.callout, { color: t.colors.labelSecondary, fontWeight: '600', fontFamily: t.fontFamily }]}>
+                Sửa X&Y
+              </Text>
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [styles.halfButton, {
+                backgroundColor: t.colors.surfaceSecondary,
+                borderRadius: t.radius.md,
+                opacity: pressed && Platform.OS === 'ios' ? 0.75 : 1,
+              }]}
+              android_ripple={{ color: t.colors.fillTertiary }}
+              onPress={swapXY}
+              accessibilityRole="button"
+              accessibilityLabel="Hoán đổi tọa độ X và Y"
+            >
+              <Text style={[t.typography.callout, { color: t.colors.labelSecondary, fontWeight: '600', fontFamily: t.fontFamily }]}>
+                Hoán đổi X↔Y
+              </Text>
+            </Pressable>
           </View>
 
           <CoordinateRow
@@ -254,24 +283,59 @@ const HomeScreen = () => {
             isNew
           />
 
-          <TouchableOpacity
-            style={[styles.fullWidthButton, styles.primaryButton, { marginTop: Spacing.lg }]}
+          {/* Primary CTA */}
+          <Pressable
+            style={({ pressed }) => [styles.fullButton, {
+              backgroundColor: t.colors.primary,
+              borderRadius: t.radius.md,
+              marginTop: t.spacing.base,
+              opacity: pressed && Platform.OS === 'ios' ? 0.75 : 1,
+            }]}
+            android_ripple={{ color: 'rgba(255,255,255,0.25)' }}
             onPress={handleViewMap}
+            disabled={coordinates.length === 0 || isViewingMap}
+            accessibilityRole="button"
+            accessibilityLabel="Xem thửa đất trên bản đồ"
           >
-            <Text style={styles.buttonText}>Xem Bản Đồ</Text>
-          </TouchableOpacity>
+            {isViewingMap
+              ? <ActivityIndicator color="#fff" />
+              : <Text style={[t.typography.headline, { color: '#fff', fontFamily: t.fontFamily }]}>Xem Bản Đồ</Text>
+            }
+          </Pressable>
 
-          <TouchableOpacity
-            style={[styles.fullWidthButton, styles.successButton, { marginTop: Spacing.sm }]}
+          {/* Secondary CTA */}
+          <Pressable
+            style={({ pressed }) => [styles.fullButton, {
+              backgroundColor: t.colors.success,
+              borderRadius: t.radius.md,
+              marginTop: t.spacing.sm,
+              opacity: pressed && Platform.OS === 'ios' ? 0.75 : 1,
+            }]}
+            android_ripple={{ color: 'rgba(255,255,255,0.25)' }}
             onPress={() => setSaveModalVisible(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Lưu dự án"
           >
-            <Text style={styles.buttonText}>Lưu Lại</Text>
-          </TouchableOpacity>
+            <Text style={[t.typography.headline, { color: '#fff', fontFamily: t.fontFamily }]}>Lưu Lại</Text>
+          </Pressable>
 
-          <View style={styles.actionRow}>
-            <TouchableOpacity style={[styles.button, styles.outlineButton]} onPress={addCoordinate}>
-              <Text style={styles.outlineButtonText}>+ Thêm Tọa Độ</Text>
-            </TouchableOpacity>
+          {/* Ghost CTA */}
+          <View style={[styles.actionRow, { marginVertical: t.spacing.base }]}>
+            <Pressable
+              style={({ pressed }) => [styles.outlineButton, {
+                borderColor: t.colors.primary,
+                borderRadius: t.radius.md,
+                opacity: pressed && Platform.OS === 'ios' ? 0.75 : 1,
+              }]}
+              android_ripple={{ color: t.colors.fillPrimary }}
+              onPress={addCoordinate}
+              accessibilityRole="button"
+              accessibilityLabel="Thêm tọa độ mới"
+            >
+              <Text style={[t.typography.callout, { color: t.colors.primary, fontWeight: '700', fontFamily: t.fontFamily }]}>
+                + Thêm Tọa Độ
+              </Text>
+            </Pressable>
           </View>
 
           <SaveProjectModal
@@ -288,65 +352,48 @@ const HomeScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.surface },
-  scrollView: { flex: 1, paddingHorizontal: Spacing.xl },
+  container: { flex: 1 },
+  scrollView: { flex: 1, paddingHorizontal: 20 },
   scanRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: Spacing.md,
-    backgroundColor: Colors.surfaceSecondary,
-    padding: Spacing.sm + 2,
-    borderRadius: Radius.sm + 2,
+    marginBottom: 12,
+    gap: 8,
   },
-  scanText: { fontSize: Typography.fontSizes.md, color: Colors.textSecondary },
   scanButton: {
-    backgroundColor: Colors.primary,
     paddingHorizontal: 18,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.sm,
-    marginHorizontal: Spacing.sm,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
+    paddingVertical: 10,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
   },
-  scanButtonText: { color: Colors.textOnPrimary, fontWeight: Typography.fontWeights.bold, fontSize: Typography.fontSizes.md },
-  fullWidthButton: {
+  fullButton: {
     width: '100%',
-    paddingVertical: 14,
-    borderRadius: Radius.md,
+    minHeight: 50,
     alignItems: 'center',
-    shadowColor: Colors.textPrimary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
+    justifyContent: 'center',
+    overflow: 'hidden',
   },
-  actionRow: { flexDirection: 'row', justifyContent: 'space-between', marginVertical: 15 },
-  button: {
-    flex: 0.48,
-    paddingVertical: 14,
-    borderRadius: Radius.md,
+  actionRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  halfButton: {
+    flex: 1,
+    minHeight: 50,
     alignItems: 'center',
-    shadowColor: Colors.textPrimary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
+    justifyContent: 'center',
+    overflow: 'hidden',
   },
-  primaryButton: { backgroundColor: Colors.primary },
-  successButton: { backgroundColor: Colors.success },
-  secondaryButton: { backgroundColor: Colors.surfaceSecondary },
-  warningButton: { backgroundColor: Colors.warning },
   outlineButton: {
     flex: 1,
+    minHeight: 50,
     borderWidth: 1.5,
-    borderColor: Colors.primary,
-    backgroundColor: Colors.surface,
+    backgroundColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  buttonText: { color: Colors.textOnPrimary, fontSize: Typography.fontSizes.md, fontWeight: Typography.fontWeights.bold },
-  secondaryButtonText: { color: Colors.textSecondary, fontSize: Typography.fontSizes.md, fontWeight: Typography.fontWeights.bold },
-  outlineButtonText: { color: Colors.primary, fontSize: Typography.fontSizes.md, fontWeight: Typography.fontWeights.bold },
 });
 
 export default HomeScreen;

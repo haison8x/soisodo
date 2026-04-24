@@ -9,13 +9,21 @@ const ToastConsumer = ({ type, message }: { type: 'success' | 'error' | 'info'; 
 };
 
 describe('ToastProvider', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.runOnlyPendingTimers();
+    jest.useRealTimers();
+  });
+
   it('renders children without crashing', () => {
     const { getByText } = render(
       <ToastProvider>
         <React.Fragment><></></React.Fragment>
       </ToastProvider>,
     );
-    // No crash = pass
     expect(true).toBeTruthy();
   });
 
@@ -25,6 +33,11 @@ describe('ToastProvider', () => {
         <ToastConsumer type="success" message="Đã lưu thành công" />
       </ToastProvider>,
     );
+    
+    act(() => {
+      jest.advanceTimersByTime(100);
+    });
+
     expect(await findByText('Đã lưu thành công')).toBeTruthy();
   });
 
@@ -34,6 +47,11 @@ describe('ToastProvider', () => {
         <ToastConsumer type="error" message="Có lỗi xảy ra" />
       </ToastProvider>,
     );
+
+    act(() => {
+      jest.advanceTimersByTime(100);
+    });
+
     expect(await findByText('Có lỗi xảy ra')).toBeTruthy();
   });
 });

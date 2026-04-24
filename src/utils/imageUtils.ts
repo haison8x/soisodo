@@ -1,6 +1,5 @@
 import { nanoid } from 'nanoid/non-secure';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
 import { Alert, ActionSheetIOS, Platform } from 'react-native';
 import TextRecognition from '@react-native-ml-kit/text-recognition';
 import type { Coordinate } from '../types';
@@ -62,7 +61,7 @@ export const pickImageAndSave = async (): Promise<string | null> => {
 
 export const exrtactTextFromImage = async (imageUri: string): Promise<string | null> => {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const result = await (TextRecognition as any).recognize(imageUri);
 
     if (result?.text) {

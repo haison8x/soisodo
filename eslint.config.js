@@ -1,6 +1,7 @@
 const expo = require('eslint-config-expo/flat');
 
 module.exports = [
+  { ignores: ['ui-audit/**', 'dist/**', 'node_modules/**', 'ios/**', 'android/**', '.expo/**'] },
   ...expo,
   {
     settings: {
@@ -8,16 +9,5 @@ module.exports = [
         version: '19.1.0',
       },
     },
-  },
-  {
-    files: ['**/*.{ts,tsx}'],
-    ignores: [
-      'dist/*',
-      'node_modules/*',
-      'ios/*',
-      'android/*',
-      '.expo/*',
-      '*.d.ts',
-    ],
   },
 ];

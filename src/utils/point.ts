@@ -156,14 +156,13 @@ export function toMapPoints(
   points: Coordinate[],
 ): MapData {
   const projection = proj4Dict[province];
-  let wgs84Points: WGS84Point[] = points.map(p =>
-    proj4(projection, 'WGS84', { y: parseFloat(p.x), x: parseFloat(p.y) }),
-  );
-
-  wgs84Points = wgs84Points.map(p => ({
-    longitude: (p as unknown as { x: number }).x,
-    latitude: (p as unknown as { y: number }).y,
-  }));
+  const wgs84Points: WGS84Point[] = points.map(p => {
+    const rawPoint = proj4(projection, 'WGS84', { y: parseFloat(p.x), x: parseFloat(p.y) });
+    return {
+      longitude: (rawPoint as any).x,
+      latitude: (rawPoint as any).y,
+    };
+  });
 
   return { points, wgs84Points, name, province };
 }
