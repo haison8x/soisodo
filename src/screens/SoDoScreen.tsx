@@ -19,24 +19,41 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { FileText, Trash2, Map, Calendar, ChevronRight, Edit3, MapPin } from 'lucide-react-native';
 import { toMapPoints } from '../utils/point';
 import { useInterstitialAd } from '../hooks/useInterstitialAd';
+import { useRewardedAd } from '../hooks/useRewardedAd';
 import { useTheme } from '../theme/ThemeProvider';
+import AdFreeService from '../services/AdFreeService';
+import { AD_UNITS, SODO_REWARDED_MIN_COUNT, SODO_REWARDED_THROTTLE_MS } from '../constants/adUnits';
 import type { Project } from '../types';
 
 const SoDoScreen = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const navigation = useNavigation();
   const { showAd } = useInterstitialAd();
+  const { showAd: showRewardedAd } = useRewardedAd(AD_UNITS.rewarded);
   const tabBarHeight = useBottomTabBarHeight();
   const t = useTheme();
+
+  const checkAndShowRewardedPrompt = useCallback(async (loadedProjects: Project[]) => {
+    if (loadedProjects.length <= SODO_REWARDED_MIN_COUNT) return;
+    if (AdFreeService.isAdSuppressed()) return;
+    const lastPrompt = await AdFreeService.getSodoLastPromptMs();
+    if (Date.now() - lastPrompt <= SODO_REWARDED_THROTTLE_MS) return;
+    await AdFreeService.saveSodoLastPromptMs();
+    showRewardedAd(async () => {
+      await AdFreeService.grantAdFree();
+    });
+  }, [showRewardedAd]);
 
   const loadProjects = useCallback(async () => {
     try {
       const projectsJson = await AsyncStorage.getItem('saved_projects');
-      if (projectsJson) setProjects(JSON.parse(projectsJson) as Project[]);
+      const loaded = projectsJson ? (JSON.parse(projectsJson) as Project[]) : [];
+      setProjects(loaded);
+      await checkAndShowRewardedPrompt(loaded);
     } catch {
       // silent — UI shows empty state
     }
-  }, []);
+  }, [checkAndShowRewardedPrompt]);
 
   useFocusEffect(useCallback(() => { loadProjects(); }, [loadProjects]));
 

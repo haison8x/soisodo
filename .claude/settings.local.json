@@ -19,7 +19,14 @@
       "Bash(echo \"TSC_EXIT:$?\")",
       "Bash(echo \"ESLINT_EXIT:$?\")",
       "Bash(node_modules/.bin/tsc --noEmit)",
-      "Bash(echo \"exit=$?\")"
+      "Bash(echo \"exit=$?\")",
+      "PowerShell(.specify/scripts/powershell/setup-plan.ps1 -Json)",
+      "PowerShell(.specify/scripts/powershell/update-agent-context.ps1 -AgentType claude)",
+      "PowerShell(.specify/scripts/powershell/check-prerequisites.ps1 -Json)",
+      "PowerShell(.specify/scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks)",
+      "Bash(npx jest *)",
+      "Bash(pnpm lint *)",
+      "Bash(pnpm test *)"
     ]
   }
 }

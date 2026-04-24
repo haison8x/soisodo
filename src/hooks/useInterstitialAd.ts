@@ -1,30 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Platform } from 'react-native';
 import { InterstitialAd, AdEventType, TestIds } from 'react-native-google-mobile-ads';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const AD_UNIT_ID =
-  Platform.select({
-    android: 'ca-app-pub-8386795729138351/9741278432',
-    ios: 'ca-app-pub-8386795729138351/9741278432',
-  }) ?? TestIds.INTERSTITIAL;
+import { AD_UNITS } from '../constants/adUnits';
+import AdFreeService from '../services/AdFreeService';
 
 const interstitial = InterstitialAd.createForAdRequest(
-  __DEV__ ? TestIds.INTERSTITIAL : AD_UNIT_ID,
+  __DEV__ ? TestIds.INTERSTITIAL : AD_UNITS.interstitial,
   { requestNonPersonalizedAdsOnly: true },
 );
 
 export const useInterstitialAd = () => {
   const [loaded, setLoaded] = useState(false);
-  const [isPremium, setIsPremium] = useState(false);
 
   useEffect(() => {
-    const checkPremium = async () => {
-      const status = await AsyncStorage.getItem('is_premium');
-      setIsPremium(status === 'true');
-    };
-    checkPremium();
-
     const unsubscribeLoaded = interstitial.addAdEventListener(AdEventType.LOADED, () => {
       setLoaded(true);
     });
@@ -44,7 +31,7 @@ export const useInterstitialAd = () => {
 
   const showAd = useCallback(
     (onComplete?: () => void) => {
-      if (isPremium) {
+      if (AdFreeService.isAdSuppressed()) {
         onComplete?.();
         return;
       }
@@ -60,7 +47,7 @@ export const useInterstitialAd = () => {
         interstitial.load();
       }
     },
-    [loaded, isPremium],
+    [loaded],
   );
 
   return { showAd, loaded };

@@ -6,12 +6,12 @@ import { StatusBar } from 'expo-status-bar';
 import mobileAds from 'react-native-google-mobile-ads';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ToastProvider } from './src/components/shared/ToastProvider';
+import AdFreeService from './src/services/AdFreeService';
 
 mobileAds()
   .initialize()
-  .then(() => {
-    console.log('Ads initialized');
-  });
+  .then(() => AdFreeService.initialize())
+  .catch(() => AdFreeService.initialize());
 
 export default function App() {
   return (

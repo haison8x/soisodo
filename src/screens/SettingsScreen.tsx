@@ -10,18 +10,21 @@
  *
  * Expected new score: 77/100
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable, Alert, Linking, Platform, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
-import { Star, Info, ShoppingCart, RotateCcw, Trash2, Shield, FileText, ChevronRight } from 'lucide-react-native';
+import { Star, Info, ShoppingCart, RotateCcw, Trash2, Shield, FileText, ChevronRight, Tv } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
 import { useToast } from '../components/shared/ToastProvider';
+import AdFreeService from '../services/AdFreeService';
+import { useRewardedAd } from '../hooks/useRewardedAd';
+import { AD_UNITS } from '../constants/adUnits';
 
 import * as RNIap from 'react-native-iap';
 import type { Purchase } from 'react-native-iap';
@@ -41,6 +44,15 @@ const itemSkus = Platform.select<string[]>({ android: ['remove_ads'], ios: ['rem
 // Note: '#FFD700' should be added to tokens.ts as starGold for full consistency.
 const STAR_GOLD = '#FFD700';
 
+const formatAdFreeRemaining = (ms: number): string => {
+  if (ms <= 0) return '';
+  const totalMinutes = Math.ceil(ms / 60_000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours > 0) return `Còn ${hours} giờ ${minutes} phút`;
+  return `Còn ${minutes} phút`;
+};
+
 const SettingsScreen = () => {
   const navigation = useNavigation();
   const tabBarHeight = useBottomTabBarHeight();
@@ -49,6 +61,35 @@ const SettingsScreen = () => {
   const [isPremium, setIsPremium] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [cacheSize, setCacheSize] = useState('Tính toán...');
+  const [adFreeRemaining, setAdFreeRemaining] = useState(0);
+  const { showAd: showRewardedAd } = useRewardedAd(AD_UNITS.rewarded);
+
+  const refreshAdFreeStatus = useCallback(() => {
+    setAdFreeRemaining(AdFreeService.getAdFreeRemainingMs());
+  }, []);
+
+  useEffect(() => {
+    refreshAdFreeStatus();
+    const timer = setInterval(refreshAdFreeStatus, 60_000);
+    return () => clearInterval(timer);
+  }, [refreshAdFreeStatus]);
+
+  const handleWatchRewardedAd = useCallback(() => {
+    showRewardedAd(
+      async () => {
+        try {
+          await AdFreeService.grantAdFree();
+          refreshAdFreeStatus();
+          showToast('Bạn đã được miễn quảng cáo trong 72 giờ!', 'success');
+        } catch {
+          showToast('Không thể kích hoạt ưu đãi. Vui lòng thử lại.', 'error');
+        }
+      },
+      () => {
+        showToast('Bạn cần xem hết quảng cáo để nhận ưu đãi.', 'info');
+      },
+    );
+  }, [showRewardedAd, refreshAdFreeStatus, showToast]);
 
   useEffect(() => {
     checkPremiumStatus();
@@ -69,8 +110,10 @@ const SettingsScreen = () => {
           const receipt = purchase.purchaseToken ?? purchase.transactionId;
           if (receipt) {
             await AsyncStorage.setItem('is_premium', 'true');
+            await AdFreeService.refreshFromStorage();
             setIsPremium(true);
             setIsPurchasing(false);
+            refreshAdFreeStatus();
             await safeFinishTransaction({ purchase, isConsumable: false });
             showToast('Cảm ơn bạn đã ủng hộ! Gói Premium đã kích hoạt.', 'success');
           }
@@ -86,7 +129,7 @@ const SettingsScreen = () => {
     };
     initIAP();
     return () => { purchaseUpdateSub?.remove(); purchaseErrorSub?.remove(); RNIap.endConnection(); };
-  }, [showToast]);
+  }, [showToast, refreshAdFreeStatus]);
 
   const checkPremiumStatus = async () => {
     const status = await AsyncStorage.getItem('is_premium');
@@ -242,6 +285,39 @@ const SettingsScreen = () => {
           <View style={[styles.sep, { backgroundColor: t.colors.separator }]} />
           <Row title="Hướng dẫn sử dụng" icon={<Info size={22} color={t.colors.label} />} onPress={() => navigation.navigate('UserManual' as never)} />
         </View>
+
+        {!AdFreeService.isAdSuppressed() && (
+          <>
+            <SectionLabel title="Quảng cáo" />
+            <View style={[styles.section, { backgroundColor: t.colors.surface, borderRadius: t.radius.md }]}>
+              <Row
+                title="Xem quảng cáo để miễn quảng cáo 72 giờ"
+                subtitle="Xem một quảng cáo ngắn để không bị làm phiền trong 72 giờ"
+                icon={<Tv size={22} color={t.colors.primary} />}
+                onPress={handleWatchRewardedAd}
+              />
+            </View>
+          </>
+        )}
+
+        {AdFreeService.isAdFreePeriodActive() && (
+          <>
+            <SectionLabel title="Quảng cáo" />
+            <View style={[styles.section, { backgroundColor: t.colors.surface, borderRadius: t.radius.md }]}>
+              <View style={[styles.row, { backgroundColor: t.colors.surface }]}>
+                <View style={styles.rowIcon}><Tv size={22} color={t.colors.primary} /></View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[t.typography.callout, { color: t.colors.label, fontFamily: t.fontFamily }]}>
+                    Miễn quảng cáo đang hoạt động
+                  </Text>
+                  <Text style={[t.typography.footnote, { color: t.colors.labelSecondary, fontFamily: t.fontFamily }]}>
+                    {formatAdFreeRemaining(adFreeRemaining)}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </>
+        )}
 
         <SectionLabel title="Mua hàng" />
         <View style={[styles.section, { backgroundColor: t.colors.surface, borderRadius: t.radius.md }]}>
