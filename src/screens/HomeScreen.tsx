@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   Pressable,
-  ScrollView,
+  Animated,
+  TextInput,
   KeyboardAvoidingView,
   Platform,
   Alert,
@@ -14,8 +15,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { nanoid } from 'nanoid/non-secure';
+import { Camera, ChevronRight, ArrowLeftRight, Pencil } from 'lucide-react-native';
 
-import ProjectTitleInput from '../components/HomeScreen/ProjectTitleInput';
+import AdBanner from '../components/AdBanner';
 import CitySelector from '../components/HomeScreen/CitySelector';
 import CityModal from '../components/HomeScreen/CityModal';
 import CoordinateRow from '../components/HomeScreen/CoordinateRow';
@@ -53,9 +55,17 @@ const HomeScreen = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [saveModalVisible, setSaveModalVisible] = useState(false);
   const [isViewingMap, setIsViewingMap] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const [newX, setNewX] = useState('');
   const [newY, setNewY] = useState('');
+
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const navTitleOpacity = scrollY.interpolate({
+    inputRange: [40, 80],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
 
   useEffect(() => {
     const params = (route.params as { projectData?: Project } | undefined);
@@ -85,12 +95,16 @@ const HomeScreen = () => {
   };
 
   const deleteCoordinate = (id: string) => {
-    setCoordinates(coordinates.filter(coord => coord.id !== id));
+    setCoordinates(prev => prev.filter(coord => coord.id !== id));
+  };
+
+  const updateCoordinate = (id: string, field: 'x' | 'y', value: string) => {
+    setCoordinates(prev => prev.map(c => c.id === id ? { ...c, [field]: value } : c));
   };
 
   const addCoordinate = () => {
-    if (newX && newY) {
-      setCoordinates([...coordinates, { id: nanoid(), x: newX, y: newY }]);
+    if (newX.trim() && newY.trim()) {
+      setCoordinates(prev => [...prev, { id: nanoid(), x: newX.trim(), y: newY.trim() }]);
       setNewX('');
       setNewY('');
     }
@@ -173,127 +187,169 @@ const HomeScreen = () => {
     }
   };
 
+  const hasCoordinates = coordinates.length > 0;
+
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: t.colors.surface }]} edges={['top', 'left', 'right']}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={{ paddingBottom: tabBarHeight + t.spacing.base }}
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: t.colors.backgroundGrouped }]}
+      edges={['top', 'left', 'right']}
+    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.flex}
+      >
+        {/* ── Navigation bar ── */}
+        <View style={[styles.navBar, { borderBottomColor: t.colors.separator }]}>
+          <Animated.Text
+            style={[t.typography.headline, styles.navTitle, { color: t.colors.label, opacity: navTitleOpacity, fontFamily: t.fontFamily }]}
+            numberOfLines={1}
+          >
+            {title}
+          </Animated.Text>
+          <Pressable
+            onPress={() => setIsEditMode(e => !e)}
+            style={styles.navButton}
+            accessibilityRole="button"
+            accessibilityLabel={isEditMode ? 'Xong chỉnh sửa' : 'Chỉnh sửa danh sách tọa độ'}
+          >
+            <Text style={[t.typography.body, { color: t.colors.primary, fontFamily: t.fontFamily }]}>
+              {isEditMode ? 'Xong' : 'Sửa'}
+            </Text>
+          </Pressable>
+        </View>
+
+        {/* ── Scroll content ── */}
+        <Animated.ScrollView
+          style={styles.flex}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + 20 }]}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+            { useNativeDriver: true },
+          )}
+          scrollEventThrottle={16}
+          keyboardShouldPersistTaps="handled"
         >
-          <ProjectTitleInput value={title} onChangeText={setTitle} />
-          <CitySelector selectedCity={selectedCity} onPress={() => setModalVisible(true)} />
-
-          <CityModal
-            visible={modalVisible}
-            onClose={() => setModalVisible(false)}
-            searchText={searchText}
-            onSearchChange={setSearchText}
-            onSelectCity={item => { setSelectedCity(item); setModalVisible(false); setSearchText(''); }}
-            selectedCity={selectedCity}
-          />
-          <CoordinateEditModal
-            visible={editModalVisible}
-            onClose={() => setEditModalVisible(false)}
-            onSave={handleSaveEdit}
-            initialValue={editText}
+          {/* Large title */}
+          <TextInput
+            style={[t.typography.largeTitle, styles.largeTitle, { color: t.colors.label, fontFamily: t.fontFamily }]}
+            value={title}
+            onChangeText={setTitle}
+            placeholder="Tên dự án"
+            placeholderTextColor={t.colors.placeholder}
           />
 
-          {/* Scan row */}
-          <View style={[styles.scanRow, {
-            backgroundColor: t.colors.surfaceSecondary,
-            borderRadius: t.radius.md,
-            padding: t.spacing.md,
-          }]}>
-            <Text style={[t.typography.subheadline, { color: t.colors.labelSecondary, fontFamily: t.fontFamily }]}>
-              Nhập tọa độ hoặc
-            </Text>
-            <Pressable
-              style={({ pressed }) => [
-                styles.scanButton,
-                { backgroundColor: t.colors.primary, borderRadius: t.radius.sm },
-                pressed && Platform.OS === 'ios' && { opacity: 0.75 },
-                isScanning && { opacity: 0.6 },
-              ]}
-              android_ripple={{ color: 'rgba(255,255,255,0.25)' }}
-              onPress={handleScan}
-              disabled={isScanning}
-              accessibilityRole="button"
-              accessibilityLabel="Quét ảnh tọa độ"
-            >
+          {/* Scan card */}
+          <Pressable
+            style={({ pressed }) => [
+              styles.card,
+              t.shadow.sm,
+              { backgroundColor: t.colors.surface },
+              pressed && Platform.OS === 'ios' && { opacity: 0.85 },
+            ]}
+            android_ripple={{ color: t.colors.fillTertiary }}
+            onPress={handleScan}
+            disabled={isScanning}
+            accessibilityRole="button"
+            accessibilityLabel="Quét tọa độ từ ảnh"
+          >
+            <View style={[styles.scanIconWrap, { backgroundColor: t.colors.primaryLight }]}>
               {isScanning
-                ? <ActivityIndicator size="small" color="#fff" />
-                : <Text style={[t.typography.callout, { color: '#fff', fontWeight: '700', fontFamily: t.fontFamily }]}>Scan</Text>
+                ? <ActivityIndicator size="small" color={t.colors.primary} />
+                : <Camera size={22} color={t.colors.primary} />
               }
-            </Pressable>
-            <Text style={[t.typography.subheadline, { color: t.colors.labelSecondary, fontFamily: t.fontFamily }]}>
-              từ bộ sưu tập ảnh
-            </Text>
+            </View>
+            <View style={styles.scanText}>
+              <Text style={[t.typography.headline, { color: t.colors.label, fontFamily: t.fontFamily }]}>
+                Quét tọa độ từ ảnh
+              </Text>
+              <Text style={[t.typography.subheadline, styles.scanSub, { color: t.colors.labelSecondary, fontFamily: t.fontFamily }]}>
+                Tự động nhận dạng từ sổ đỏ
+              </Text>
+            </View>
+            <ChevronRight size={18} color={t.colors.labelTertiary} />
+          </Pressable>
+
+          {/* City card */}
+          <View style={[styles.cardNoPad, t.shadow.sm, { backgroundColor: t.colors.surface }]}>
+            <CitySelector selectedCity={selectedCity} onPress={() => setModalVisible(true)} />
           </View>
 
-          {coordinates.map((coord, index) => (
+          {/* Coordinates section */}
+          <Text style={[styles.sectionHeader, { color: t.colors.labelSecondary, fontFamily: t.fontFamily }]}>
+            Tọa độ{coordinates.length > 0 ? ` · ${coordinates.length} điểm` : ''}
+          </Text>
+          <View style={[styles.cardNoPad, t.shadow.sm, { backgroundColor: t.colors.surface }]}>
+            {coordinates.map((coord, index) => (
+              <React.Fragment key={coord.id}>
+                <CoordinateRow
+                  index={index}
+                  x={coord.x}
+                  y={coord.y}
+                  isEditMode={isEditMode}
+                  onChangeX={val => updateCoordinate(coord.id, 'x', val)}
+                  onChangeY={val => updateCoordinate(coord.id, 'y', val)}
+                  onDelete={() => deleteCoordinate(coord.id)}
+                />
+                <View style={[styles.rowSep, { backgroundColor: t.colors.separator, marginLeft: isEditMode ? 54 : 16 }]} />
+              </React.Fragment>
+            ))}
             <CoordinateRow
-              key={coord.id}
-              index={index}
-              x={coord.x}
-              y={coord.y}
-              onDelete={() => deleteCoordinate(coord.id)}
+              index={coordinates.length}
+              x={newX}
+              y={newY}
+              onChangeX={setNewX}
+              onChangeY={setNewY}
+              onAdd={addCoordinate}
+              isNew
             />
-          ))}
+          </View>
 
-          {/* Utility action row — both neutral secondary style, not warning orange */}
-          <View style={[styles.actionRow, { marginVertical: t.spacing.base }]}>
+          {/* In-feed ad — cuối danh sách tọa độ */}
+          <AdBanner style={{ borderRadius: 10, marginBottom: 12 }} />
+
+          {/* Utility row */}
+          <View style={[styles.utilityRow, t.shadow.sm, { backgroundColor: t.colors.surface }]}>
             <Pressable
-              style={({ pressed }) => [styles.halfButton, {
-                backgroundColor: t.colors.surfaceSecondary,
-                borderRadius: t.radius.md,
-                opacity: pressed && Platform.OS === 'ios' ? 0.75 : 1,
-              }]}
-              android_ripple={{ color: t.colors.fillTertiary }}
+              style={({ pressed }) => [styles.utilityBtn, pressed && Platform.OS === 'ios' && { opacity: 0.6 }]}
+              android_ripple={{ color: t.colors.fillPrimary }}
               onPress={() => { setEditText(formatCoordinatesForEdit()); setEditModalVisible(true); }}
               accessibilityRole="button"
               accessibilityLabel="Sửa tọa độ X và Y"
             >
-              <Text style={[t.typography.callout, { color: t.colors.labelSecondary, fontWeight: '600', fontFamily: t.fontFamily }]}>
+              <Pencil size={15} color={t.colors.primary} />
+              <Text style={[t.typography.callout, styles.utilityLabel, { color: t.colors.primary, fontFamily: t.fontFamily }]}>
                 Sửa X&Y
               </Text>
             </Pressable>
+            <View style={[styles.utilityDivider, { backgroundColor: t.colors.separator }]} />
             <Pressable
-              style={({ pressed }) => [styles.halfButton, {
-                backgroundColor: t.colors.surfaceSecondary,
-                borderRadius: t.radius.md,
-                opacity: pressed && Platform.OS === 'ios' ? 0.75 : 1,
-              }]}
-              android_ripple={{ color: t.colors.fillTertiary }}
+              style={({ pressed }) => [styles.utilityBtn, pressed && Platform.OS === 'ios' && { opacity: 0.6 }]}
+              android_ripple={{ color: t.colors.fillPrimary }}
               onPress={swapXY}
               accessibilityRole="button"
-              accessibilityLabel="Hoán đổi tọa độ X và Y"
+              accessibilityLabel="Hoán đổi X và Y"
             >
-              <Text style={[t.typography.callout, { color: t.colors.labelSecondary, fontWeight: '600', fontFamily: t.fontFamily }]}>
+              <ArrowLeftRight size={15} color={t.colors.primary} />
+              <Text style={[t.typography.callout, styles.utilityLabel, { color: t.colors.primary, fontFamily: t.fontFamily }]}>
                 Hoán đổi X↔Y
               </Text>
             </Pressable>
           </View>
 
-          <CoordinateRow
-            index={coordinates.length}
-            x={newX}
-            y={newY}
-            onChangeX={setNewX}
-            onChangeY={setNewY}
-            isNew
-          />
-
           {/* Primary CTA */}
           <Pressable
-            style={({ pressed }) => [styles.fullButton, {
-              backgroundColor: t.colors.primary,
-              borderRadius: t.radius.md,
-              marginTop: t.spacing.base,
-              opacity: pressed && Platform.OS === 'ios' ? 0.75 : 1,
-            }]}
+            style={({ pressed }) => [
+              styles.primaryButton,
+              {
+                backgroundColor: hasCoordinates ? t.colors.primary : t.colors.labelTertiary,
+                borderRadius: t.radius.lg,
+                marginTop: 20,
+                opacity: pressed && Platform.OS === 'ios' ? 0.8 : 1,
+              },
+            ]}
             android_ripple={{ color: 'rgba(255,255,255,0.25)' }}
             onPress={handleViewMap}
-            disabled={coordinates.length === 0 || isViewingMap}
+            disabled={!hasCoordinates || isViewingMap}
             accessibilityRole="button"
             accessibilityLabel="Xem thửa đất trên bản đồ"
           >
@@ -305,12 +361,15 @@ const HomeScreen = () => {
 
           {/* Secondary CTA */}
           <Pressable
-            style={({ pressed }) => [styles.fullButton, {
-              backgroundColor: t.colors.success,
-              borderRadius: t.radius.md,
-              marginTop: t.spacing.sm,
-              opacity: pressed && Platform.OS === 'ios' ? 0.75 : 1,
-            }]}
+            style={({ pressed }) => [
+              styles.primaryButton,
+              {
+                backgroundColor: t.colors.success,
+                borderRadius: t.radius.lg,
+                marginTop: 10,
+                opacity: pressed && Platform.OS === 'ios' ? 0.8 : 1,
+              },
+            ]}
             android_ripple={{ color: 'rgba(255,255,255,0.25)' }}
             onPress={() => setSaveModalVisible(true)}
             accessibilityRole="button"
@@ -318,81 +377,136 @@ const HomeScreen = () => {
           >
             <Text style={[t.typography.headline, { color: '#fff', fontFamily: t.fontFamily }]}>Lưu Lại</Text>
           </Pressable>
-
-          {/* Ghost CTA */}
-          <View style={[styles.actionRow, { marginVertical: t.spacing.base }]}>
-            <Pressable
-              style={({ pressed }) => [styles.outlineButton, {
-                borderColor: t.colors.primary,
-                borderRadius: t.radius.md,
-                opacity: pressed && Platform.OS === 'ios' ? 0.75 : 1,
-              }]}
-              android_ripple={{ color: t.colors.fillPrimary }}
-              onPress={addCoordinate}
-              accessibilityRole="button"
-              accessibilityLabel="Thêm tọa độ mới"
-            >
-              <Text style={[t.typography.callout, { color: t.colors.primary, fontWeight: '700', fontFamily: t.fontFamily }]}>
-                + Thêm Tọa Độ
-              </Text>
-            </Pressable>
-          </View>
-
-          <SaveProjectModal
-            visible={saveModalVisible}
-            onClose={() => setSaveModalVisible(false)}
-            onSave={handleSaveProject}
-            initialTitle={title}
-            initialCity={selectedCity?.label}
-          />
-        </ScrollView>
+        </Animated.ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Modals */}
+      <CityModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        searchText={searchText}
+        onSearchChange={setSearchText}
+        onSelectCity={item => { setSelectedCity(item); setModalVisible(false); setSearchText(''); }}
+        selectedCity={selectedCity}
+      />
+      <CoordinateEditModal
+        visible={editModalVisible}
+        onClose={() => setEditModalVisible(false)}
+        onSave={handleSaveEdit}
+        initialValue={editText}
+      />
+      <SaveProjectModal
+        visible={saveModalVisible}
+        onClose={() => setSaveModalVisible(false)}
+        onSave={handleSaveProject}
+        initialTitle={title}
+        initialCity={selectedCity?.label}
+      />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scrollView: { flex: 1, paddingHorizontal: 20 },
-  scanRow: {
+  flex: { flex: 1 },
+
+  navBar: {
+    height: 44,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
-    gap: 8,
+    paddingHorizontal: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  scanButton: {
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    minHeight: 44,
+  navTitle: {
+    flex: 1,
+  },
+  navButton: {
+    minWidth: 44,
+    height: 44,
     justifyContent: 'center',
+    alignItems: 'flex-end',
+  },
+
+  scrollContent: {
+    paddingHorizontal: 16,
+  },
+
+  largeTitle: {
+    marginTop: 8,
+    marginBottom: 20,
+    padding: 0,
+  },
+
+  card: {
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 12,
+    flexDirection: 'row',
     alignItems: 'center',
+  },
+  cardNoPad: {
+    borderRadius: 12,
+    marginBottom: 12,
     overflow: 'hidden',
   },
-  fullButton: {
+
+  scanIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scanText: {
+    flex: 1,
+    marginLeft: 14,
+  },
+  scanSub: {
+    marginTop: 2,
+  },
+
+  sectionHeader: {
+    fontSize: 13,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+    marginTop: 4,
+    marginBottom: 6,
+    marginHorizontal: 4,
+  },
+
+  rowSep: {
+    height: StyleSheet.hairlineWidth,
+    marginRight: 16,
+  },
+
+  utilityRow: {
+    flexDirection: 'row',
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginBottom: 4,
+  },
+  utilityBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    gap: 6,
+  },
+  utilityLabel: {
+    fontWeight: '500',
+  },
+  utilityDivider: {
+    width: StyleSheet.hairlineWidth,
+    marginVertical: 10,
+  },
+
+  primaryButton: {
     width: '100%',
     minHeight: 50,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
-  },
-  actionRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  halfButton: {
-    flex: 1,
-    minHeight: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  outlineButton: {
-    flex: 1,
-    minHeight: 50,
-    borderWidth: 1.5,
-    backgroundColor: 'transparent',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });
 

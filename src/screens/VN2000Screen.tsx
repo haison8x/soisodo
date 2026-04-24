@@ -11,20 +11,29 @@
  *
  * Expected new score: 76/100
  */
-import React, { useState, useMemo, useRef } from 'react';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useNavigation } from '@react-navigation/native';
+import { Check, ChevronDown, Compass, Info, MapPin, Search, X } from 'lucide-react-native';
+import React, { useMemo, useRef, useState } from 'react';
 import {
-  View, Text, StyleSheet, Pressable, ScrollView, TextInput, Modal, FlatList,
-  KeyboardAvoidingView, Platform, Alert,
+  Alert,
+  FlatList,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable, ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
-import { Compass, Info, MapPin, ChevronDown, Check, X, Search } from 'lucide-react-native';
-import { proj4Dict, convertVN2000ToWGS84 } from '../utils/point';
-import { triggerMedium } from '../utils/haptics';
-import { useNavigation } from '@react-navigation/native';
+import AdBanner from '../components/AdBanner';
 import { useInterstitialAd } from '../hooks/useInterstitialAd';
 import { useTheme } from '../theme/ThemeProvider';
 import type { WGS84Point } from '../types';
+import { triggerMedium } from '../utils/haptics';
+import { convertVN2000ToWGS84, proj4Dict } from '../utils/point';
 
 interface Province { key: string; label: string }
 
@@ -161,6 +170,7 @@ const VN2000Screen = () => {
 
           {result && (
             <View style={[styles.card, { backgroundColor: t.colors.surface, borderRadius: t.radius.lg }, t.shadow.sm]}>
+              <AdBanner size={BannerAdSize.BANNER} style={{ marginBottom: 16 }} />
               <Text style={[t.typography.headline, { color: t.colors.label, marginBottom: t.spacing.base, fontFamily: t.fontFamily }]}>
                 Kết quả
               </Text>

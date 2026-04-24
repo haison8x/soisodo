@@ -1,16 +1,16 @@
 import '@testing-library/jest-native/extend-expect';
 
 // Mock Expo's winter registry if it causes issues in Node environment
-if (typeof global !== 'undefined') {
-  (global as any).__ExpoImportMetaRegistry = {
+if (typeof globalThis !== 'undefined') {
+  (globalThis as any).__ExpoImportMetaRegistry = {
     ImportMetaRegistry: {
       get: (id: string) => ({}),
       set: (id: string, value: any) => {},
     }
   };
   // Mock structuredClone to avoid expo polyfill issues
-  if (!(global as any).structuredClone) {
-    (global as any).structuredClone = (val: any) => JSON.parse(JSON.stringify(val));
+  if (!(globalThis as any).structuredClone) {
+    (globalThis as any).structuredClone = (val: any) => JSON.parse(JSON.stringify(val));
   }
 }
 

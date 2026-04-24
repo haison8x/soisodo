@@ -11,7 +11,6 @@ import PlanningScreen from '../screens/PlanningScreen';
 import VN2000Stack from './VN2000Stack';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import AdBanner from '../components/AdBanner';
 import type { TabParamList } from '../types/navigation';
 
 const Tab = createBottomTabNavigator<TabParamList>();
@@ -20,7 +19,6 @@ const TabNavigator = () => {
   const insets = useSafeAreaInsets();
   const safeBottom = Math.max(insets.bottom, Platform.OS === 'ios' ? 25 : 20);
   const tabBarHeight = 80;
-  const adBannerBottom = safeBottom + tabBarHeight + 12;
 
   return (
     <View style={{ flex: 1 }}>
@@ -89,19 +87,6 @@ const TabNavigator = () => {
         <Tab.Screen name="Quy hoạch" component={PlanningScreen} />
         <Tab.Screen name="Cài đặt" component={SettingsStack} />
       </Tab.Navigator>
-
-      <View
-        style={{
-          position: 'absolute',
-          bottom: adBannerBottom,
-          left: 0,
-          right: 0,
-          alignItems: 'center',
-          pointerEvents: 'box-none',
-        }}
-      >
-        <AdBanner />
-      </View>
     </View>
   );
 };

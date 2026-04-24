@@ -1,7 +1,7 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { ChevronDown } from 'lucide-react-native';
-import { Colors, Spacing, Typography, Radius } from '../../theme';
+import { Pressable, Text, View, StyleSheet, Platform } from 'react-native';
+import { ChevronRight } from 'lucide-react-native';
+import { useTheme } from '../../theme/ThemeProvider';
 import type { City } from '../../types';
 
 interface Props {
@@ -10,29 +10,40 @@ interface Props {
 }
 
 const CitySelector = ({ selectedCity, onPress }: Props) => {
+  const t = useTheme();
   return (
-    <TouchableOpacity style={styles.citySelector} onPress={onPress}>
-      <Text style={styles.cityText}>{selectedCity?.label ?? 'Chọn tỉnh/thành'}</Text>
-      <ChevronDown size={20} color={Colors.textPrimary} />
-    </TouchableOpacity>
+    <Pressable
+      style={({ pressed }) => [styles.cell, pressed && Platform.OS === 'ios' && { opacity: 0.7 }]}
+      onPress={onPress}
+      android_ripple={{ color: t.colors.fillTertiary }}
+      accessibilityRole="button"
+      accessibilityLabel={`Tỉnh thành phố hiện tại: ${selectedCity?.label ?? 'Chưa chọn'}. Nhấn để thay đổi`}
+    >
+      <Text style={[t.typography.body, { color: t.colors.label, fontFamily: t.fontFamily }]}>
+        Tỉnh / Thành phố
+      </Text>
+      <View style={styles.right}>
+        <Text style={[t.typography.body, { color: t.colors.labelSecondary, fontFamily: t.fontFamily }]}>
+          {selectedCity?.label ?? 'Chọn...'}
+        </Text>
+        <ChevronRight size={16} color={t.colors.labelTertiary} />
+      </View>
+    </Pressable>
   );
 };
 
 const styles = StyleSheet.create({
-  citySelector: {
+  cell: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: Spacing.md,
-    borderRadius: Radius.md,
-    marginBottom: Spacing.xs,
-    backgroundColor: Colors.background,
+    paddingHorizontal: 16,
+    minHeight: 50,
   },
-  cityText: {
-    fontSize: Typography.fontSizes.base,
-    color: Colors.textSecondary,
+  right: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
 });
 

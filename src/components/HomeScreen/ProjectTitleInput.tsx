@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, TextInput, StyleSheet } from 'react-native';
 import { Pencil } from 'lucide-react-native';
-import { Colors, Spacing, Typography } from '../../theme';
+import { useTheme } from '../../theme/ThemeProvider';
 
 interface Props {
   value: string;
@@ -9,16 +9,17 @@ interface Props {
 }
 
 const ProjectTitleInput = ({ value, onChangeText }: Props) => {
+  const t = useTheme();
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { borderBottomColor: t.colors.primary }]}>
       <TextInput
-        style={styles.projectTitle}
+        style={[t.typography.title2, styles.input, { color: t.colors.label, fontFamily: t.fontFamily }]}
         value={value}
         onChangeText={onChangeText}
         placeholder="Nhập tên dự án..."
-        placeholderTextColor={Colors.textTertiary}
+        placeholderTextColor={t.colors.placeholder}
       />
-      <Pencil size={16} color={Colors.primary} style={styles.editIcon} />
+      <Pencil size={16} color={t.colors.primary} style={styles.icon} />
     </View>
   );
 };
@@ -28,19 +29,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 2,
-    borderBottomColor: Colors.primary,
-    marginVertical: Spacing.xs,
-    paddingBottom: Spacing.xs,
+    paddingBottom: 6,
+    marginBottom: 8,
   },
-  projectTitle: {
+  input: {
     flex: 1,
-    fontSize: Typography.fontSizes.xl,
-    fontWeight: Typography.fontWeights.semibold,
-    color: Colors.textPrimary,
     padding: 0,
   },
-  editIcon: {
-    marginLeft: Spacing.sm,
+  icon: {
+    marginLeft: 8,
     opacity: 0.7,
   },
 });

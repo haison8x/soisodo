@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
-import { Star, Info, ShoppingCart, RotateCcw, Trash2, Shield, FileText, ChevronRight, Tv } from 'lucide-react-native';
+import { Star, Info, Trash2, Shield, FileText, ChevronRight, Tv, Check, Zap } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useNavigation } from '@react-navigation/native';
@@ -100,7 +100,7 @@ const SettingsScreen = () => {
       try {
         await safeInitConnection();
         if (Platform.OS === 'android') await safeFlushAndroid();
-        await safeFetchProducts({ skus: itemSkus });
+        try { await safeFetchProducts({ skus: itemSkus }); } catch {}
         const purchases = await safeGetAvailablePurchases();
         if (purchases?.length && purchases.some((p: Purchase) => p.productId === itemSkus[0])) {
           await AsyncStorage.setItem('is_premium', 'true');
@@ -279,6 +279,105 @@ const SettingsScreen = () => {
         contentContainerStyle={{ paddingBottom: tabBarHeight + t.spacing.base }}
         showsVerticalScrollIndicator={false}
       >
+        {/* ── Premium upsell card (non-premium only) ── */}
+        {!isPremium && (
+          <View style={[styles.premiumCard, { backgroundColor: t.colors.primary }]}>
+            {/* Decorative circles */}
+            <View style={styles.decorCircleLg} />
+            <View style={styles.decorCircleSm} />
+
+            {/* Badge */}
+            <View style={styles.premiumBadge}>
+              <Zap size={12} color={STAR_GOLD} fill={STAR_GOLD} />
+              <Text style={[styles.premiumBadgeText, { fontFamily: t.fontFamily }]}>PREMIUM</Text>
+            </View>
+
+            {/* Headline */}
+            <Text style={[styles.premiumTitle, { fontFamily: t.fontFamily }]}>
+              Không quảng cáo,{'\n'}mãi mãi.
+            </Text>
+            <Text style={[styles.premiumSub, { fontFamily: t.fontFamily }]}>
+              Mua một lần — dùng trọn đời
+            </Text>
+
+            {/* Features */}
+            {[
+              'Xóa 100% quảng cáo vĩnh viễn',
+              'Xem bản đồ không giới hạn',
+              'Ủng hộ đội phát triển ứng dụng',
+            ].map((feat, i) => (
+              <View key={i} style={styles.featureRow}>
+                <View style={styles.featureCheck}>
+                  <Check size={11} color={t.colors.primary} strokeWidth={3} />
+                </View>
+                <Text style={[styles.featureText, { fontFamily: t.fontFamily }]}>{feat}</Text>
+              </View>
+            ))}
+
+            {/* CTA */}
+            <Pressable
+              style={({ pressed }) => [
+                styles.premiumCta,
+                pressed && Platform.OS === 'ios' && { opacity: 0.88 },
+                isPurchasing && { opacity: 0.7 },
+              ]}
+              android_ripple={{ color: 'rgba(0,0,0,0.08)' }}
+              onPress={handlePurchase}
+              disabled={isPurchasing}
+              accessibilityRole="button"
+              accessibilityLabel="Mua gói Premium — 99.000 đồng"
+            >
+              {isPurchasing ? (
+                <ActivityIndicator color={t.colors.primary} size="small" />
+              ) : (
+                <>
+                  <Text style={[styles.premiumCtaLabel, { color: t.colors.primary, fontFamily: t.fontFamily }]}>
+                    Mua ngay
+                  </Text>
+                  <Text style={[styles.premiumCtaPrice, { color: t.colors.primary, fontFamily: t.fontFamily }]}>
+                    99.000 đ
+                  </Text>
+                </>
+              )}
+            </Pressable>
+
+            {/* Restore link */}
+            <Pressable
+              onPress={handleRestorePurchase}
+              style={({ pressed }) => [styles.restoreBtn, pressed && { opacity: 0.6 }]}
+              accessibilityRole="button"
+              accessibilityLabel="Khôi phục mua hàng"
+            >
+              <Text style={[styles.restoreText, { fontFamily: t.fontFamily }]}>
+                Đã mua? Nhấn để khôi phục
+              </Text>
+            </Pressable>
+          </View>
+        )}
+
+        {/* ── Premium status badge (premium users) ── */}
+        {isPremium && (
+          <>
+            <SectionLabel title="Gói của bạn" />
+            <View style={[styles.section, { backgroundColor: t.colors.successLight, borderRadius: t.radius.md }]}>
+              <View style={[styles.row, { backgroundColor: 'transparent' }]}>
+                <View style={styles.rowIcon}>
+                  <Shield size={22} color={t.colors.success} fill={t.colors.success} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[t.typography.callout, { color: t.colors.successDark, fontWeight: '600', fontFamily: t.fontFamily }]}>
+                    Bạn đang dùng gói Premium
+                  </Text>
+                  <Text style={[t.typography.footnote, { color: t.colors.successDark, opacity: 0.7, fontFamily: t.fontFamily }]}>
+                    Không quảng cáo — Cảm ơn bạn đã ủng hộ!
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </>
+        )}
+
+        {/* ── Hỗ trợ ── */}
         <SectionLabel title="Hỗ trợ" />
         <View style={[styles.section, { backgroundColor: t.colors.surface, borderRadius: t.radius.md }]}>
           <Row title="Đánh giá ứng dụng" icon={<Star size={22} color={t.colors.primary} />} trailing={stars} onPress={handleRateApp} />
@@ -286,12 +385,13 @@ const SettingsScreen = () => {
           <Row title="Hướng dẫn sử dụng" icon={<Info size={22} color={t.colors.label} />} onPress={() => navigation.navigate('UserManual' as never)} />
         </View>
 
+        {/* ── Ad-free section (free tier only) ── */}
         {!AdFreeService.isAdSuppressed() && (
           <>
             <SectionLabel title="Quảng cáo" />
             <View style={[styles.section, { backgroundColor: t.colors.surface, borderRadius: t.radius.md }]}>
               <Row
-                title="Xem quảng cáo để miễn quảng cáo 72 giờ"
+                title="Xem quảng cáo để miễn 72 giờ"
                 subtitle="Xem một quảng cáo ngắn để không bị làm phiền trong 72 giờ"
                 icon={<Tv size={22} color={t.colors.primary} />}
                 onPress={handleWatchRewardedAd}
@@ -318,57 +418,6 @@ const SettingsScreen = () => {
             </View>
           </>
         )}
-
-        <SectionLabel title="Mua hàng" />
-        <View style={[styles.section, { backgroundColor: t.colors.surface, borderRadius: t.radius.md }]}>
-          {isPremium ? (
-            <View style={[styles.row, { backgroundColor: t.colors.successLight }]}>
-              <View style={styles.rowIcon}><Shield size={22} color={t.colors.success} fill={t.colors.success} /></View>
-              <Text style={[t.typography.callout, { flex: 1, color: t.colors.successDark, fontWeight: '600', fontFamily: t.fontFamily }]}>
-                Bạn đang sử dụng gói Premium
-              </Text>
-            </View>
-          ) : (
-            <>
-              <Pressable
-                onPress={handlePurchase}
-                disabled={isPurchasing}
-                android_ripple={{ color: t.colors.fillTertiary }}
-                style={({ pressed }) => [
-                  styles.row,
-                  { backgroundColor: t.colors.surface },
-                  pressed && Platform.OS === 'ios' && { backgroundColor: t.colors.fillTertiary },
-                  isPurchasing && { opacity: 0.6 },
-                ]}
-              >
-                <View style={styles.rowIcon}>
-                  {isPurchasing
-                    ? <ActivityIndicator size="small" color={t.colors.primary} />
-                    : <ShoppingCart size={22} color={t.colors.primary} />
-                  }
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[t.typography.callout, { color: t.colors.primary, fontWeight: '600', fontFamily: t.fontFamily }]}>
-                    Xóa quảng cáo — Mãi mãi
-                  </Text>
-                  <Text style={[t.typography.footnote, { color: t.colors.labelSecondary, fontFamily: t.fontFamily }]}>
-                    Mua 1 lần xóa quảng cáo vĩnh viễn
-                  </Text>
-                </View>
-                <Text style={[t.typography.title3, { color: t.colors.label, marginLeft: t.spacing.sm, fontFamily: t.fontFamily }]}>
-                  99.000 đ
-                </Text>
-              </Pressable>
-              <View style={[styles.sep, { backgroundColor: t.colors.separator }]} />
-              <Row
-                title="Khôi phục mua hàng"
-                subtitle="Khôi phục giao dịch đã mua trước đây"
-                icon={<RotateCcw size={22} color={t.colors.label} />}
-                onPress={handleRestorePurchase}
-              />
-            </>
-          )}
-        </View>
 
         <SectionLabel title="Cài đặt" />
         <View style={[styles.section, { backgroundColor: t.colors.surface, borderRadius: t.radius.md }]}>
@@ -403,6 +452,117 @@ const styles = StyleSheet.create({
   },
   rowIcon: { width: 32, alignItems: 'center', marginRight: 8 },
   sep: { height: StyleSheet.hairlineWidth, marginLeft: 56 },
+
+  // ── Premium upsell card ──────────────────────────────────────
+  premiumCard: {
+    borderRadius: 20,
+    padding: 24,
+    marginTop: 16,
+    marginBottom: 8,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  decorCircleLg: {
+    position: 'absolute',
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    top: -70,
+    right: -70,
+  },
+  decorCircleSm: {
+    position: 'absolute',
+    width: 130,
+    height: 130,
+    borderRadius: 65,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    bottom: -30,
+    left: -40,
+  },
+  premiumBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    gap: 5,
+    marginBottom: 18,
+  },
+  premiumBadgeText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  premiumTitle: {
+    color: '#fff',
+    fontSize: 28,
+    fontWeight: '700',
+    lineHeight: 34,
+    marginBottom: 6,
+  },
+  premiumSub: {
+    color: 'rgba(255,255,255,0.72)',
+    fontSize: 15,
+    lineHeight: 20,
+    marginBottom: 22,
+  },
+  featureRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 10,
+  },
+  featureCheck: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  featureText: {
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 15,
+    lineHeight: 20,
+    flex: 1,
+  },
+  premiumCta: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    paddingVertical: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 22,
+    minHeight: 52,
+  },
+  premiumCtaLabel: {
+    fontSize: 17,
+    fontWeight: '700',
+  },
+  premiumCtaPrice: {
+    fontSize: 13,
+    fontWeight: '500',
+    opacity: 0.65,
+    marginTop: 1,
+  },
+  restoreBtn: {
+    alignItems: 'center',
+    marginTop: 12,
+    paddingVertical: 6,
+  },
+  restoreText: {
+    color: 'rgba(255,255,255,0.55)',
+    fontSize: 13,
+    textDecorationLine: 'underline',
+  },
 });
 
 export default SettingsScreen;

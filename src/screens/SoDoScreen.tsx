@@ -10,20 +10,22 @@
  *
  * Expected new score: 75/100
  */
-import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, Pressable, Alert, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { FileText, Trash2, Map, Calendar, ChevronRight, Edit3, MapPin } from 'lucide-react-native';
-import { toMapPoints } from '../utils/point';
+import { Calendar, ChevronRight, Edit3, FileText, Map, MapPin, Trash2 } from 'lucide-react-native';
+import React, { useCallback, useState } from 'react';
+import { Alert, FlatList, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import AdBanner from '../components/AdBanner';
+import NativeAdBanner from '../components/NativeAdBanner';
+import { AD_UNITS, SODO_REWARDED_MIN_COUNT, SODO_REWARDED_THROTTLE_MS } from '../constants/adUnits';
 import { useInterstitialAd } from '../hooks/useInterstitialAd';
 import { useRewardedAd } from '../hooks/useRewardedAd';
-import { useTheme } from '../theme/ThemeProvider';
 import AdFreeService from '../services/AdFreeService';
-import { AD_UNITS, SODO_REWARDED_MIN_COUNT, SODO_REWARDED_THROTTLE_MS } from '../constants/adUnits';
+import { useTheme } from '../theme/ThemeProvider';
 import type { Project } from '../types';
+import { toMapPoints } from '../utils/point';
 
 const SoDoScreen = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -189,14 +191,17 @@ const SoDoScreen = () => {
       </View>
 
       {projects.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <FileText size={64} color={t.colors.separator} />
-          <Text style={[t.typography.title3, { color: t.colors.labelSecondary, marginTop: 16, fontFamily: t.fontFamily }]}>
-            Chưa có dự án nào được lưu
-          </Text>
-          <Text style={[t.typography.subheadline, { color: t.colors.labelTertiary, textAlign: 'center', marginTop: 8, fontFamily: t.fontFamily }]}>
-            Các thửa đất bạn lưu sẽ xuất hiện tại đây
-          </Text>
+        <View style={[styles.emptyContainer, { paddingBottom: tabBarHeight + 16 }]}>
+          <View style={styles.emptyCenter}>
+            <FileText size={64} color={t.colors.separator} />
+            <Text style={[t.typography.title3, { color: t.colors.labelSecondary, marginTop: 16, fontFamily: t.fontFamily }]}>
+              Chưa có dự án nào được lưu
+            </Text>
+            <Text style={[t.typography.subheadline, { color: t.colors.labelTertiary, textAlign: 'center', marginTop: 8, fontFamily: t.fontFamily }]}>
+              Các thửa đất bạn lưu sẽ xuất hiện tại đây
+            </Text>
+          </View>
+          <NativeAdBanner />
         </View>
       ) : (
         <FlatList
@@ -205,6 +210,11 @@ const SoDoScreen = () => {
           keyExtractor={item => item.id}
           contentContainerStyle={[styles.listContent, { paddingBottom: tabBarHeight + 16 }]}
           showsVerticalScrollIndicator={false}
+          ListFooterComponent={
+            projects.length <= 3
+              ? <AdBanner style={{ borderRadius: 10, marginTop: 4, marginBottom: 8 }} />
+              : null
+          }
         />
       )}
     </SafeAreaView>
@@ -237,7 +247,8 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   metaInfo: { flexDirection: 'row', alignItems: 'center', marginRight: 20 },
-  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
+  emptyContainer: { flex: 1, alignItems: 'center', padding: 24 },
+  emptyCenter: { alignItems: 'center', marginTop: 60, marginBottom: 'auto' },
 });
 
 export default SoDoScreen;

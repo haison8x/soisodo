@@ -1,21 +1,6 @@
-/**
- * Refactored from: src/components/HomeScreen/CoordinateRow.tsx (original score: N/A — component)
- *
- * Changes:
- * - Replace static Colors.* imports → useTheme() for dark mode (Color +3)
- * - Replace TouchableOpacity → Pressable with android_ripple on delete (Android +2, Feedback +2)
- * - input.paddingVertical: Spacing.sm+2 arithmetic → t.spacing.sm + 2 via token (Consistency +1)
- * - input.borderRadius: Spacing.sm+2 → t.radius.sm (proper semantic — spacing ≠ radius) (Consistency +2)
- * - input.fontSize: Typography.fontSizes.md → t.typography.callout.fontSize (Typography +1)
- * - inputLabel color, fontSize → theme tokens (Color +1, Typography +1)
- * - input background, border color → theme tokens (Color +2)
- * - Add fontFamily to all Text elements (Consistency +1)
- *
- * Critical fix: was using hardcoded Colors.* — fully broken in dark mode.
- */
 import React from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, Platform } from 'react-native';
-import { Pencil, Trash2 } from 'lucide-react-native';
+import { Minus, Plus } from 'lucide-react-native';
 import { useTheme } from '../../theme/ThemeProvider';
 
 interface Props {
@@ -25,115 +10,136 @@ interface Props {
   onDelete?: () => void;
   onChangeX?: (val: string) => void;
   onChangeY?: (val: string) => void;
+  onAdd?: () => void;
   isNew?: boolean;
+  isEditMode?: boolean;
 }
 
-const CoordinateRow = ({ index, x, y, onDelete, onChangeX, onChangeY, isNew = false }: Props) => {
+const CoordinateRow = ({
+  index, x, y, onDelete, onChangeX, onChangeY, onAdd,
+  isNew = false, isEditMode = false,
+}: Props) => {
   const t = useTheme();
+  const canAdd = isNew && x.trim().length > 0 && y.trim().length > 0;
 
   return (
-    <View style={styles.coordRow}>
-      <View style={styles.inputGroup}>
-        <Text style={[
-          t.typography.subheadline,
-          { fontWeight: '600', color: t.colors.labelSecondary, marginRight: t.spacing.sm, width: 28, fontFamily: t.fontFamily },
-        ]}>
-          X{index + 1}
-        </Text>
-        <TextInput
-          style={[
-            styles.input,
-            {
-              borderColor: t.colors.border,
-              color: t.colors.label,
-              backgroundColor: t.colors.surface,
-              borderRadius: t.radius.sm,
-              ...t.typography.callout,
-              fontFamily: t.fontFamily,
-            },
-          ]}
-          value={x}
-          onChangeText={onChangeX}
-          placeholder={isNew ? 'X' : ''}
-          placeholderTextColor={t.colors.placeholder}
-          keyboardType="numeric"
-        />
-      </View>
-
-      <View style={styles.inputGroup}>
-        <Text style={[
-          t.typography.subheadline,
-          { fontWeight: '600', color: t.colors.labelSecondary, marginRight: t.spacing.sm, width: 28, fontFamily: t.fontFamily },
-        ]}>
-          Y{index + 1}
-        </Text>
-        <TextInput
-          style={[
-            styles.input,
-            {
-              borderColor: t.colors.border,
-              color: t.colors.label,
-              backgroundColor: t.colors.surface,
-              borderRadius: t.radius.sm,
-              ...t.typography.callout,
-              fontFamily: t.fontFamily,
-            },
-          ]}
-          value={y}
-          onChangeText={onChangeY}
-          placeholder={isNew ? 'Y' : ''}
-          placeholderTextColor={t.colors.placeholder}
-          keyboardType="numeric"
-        />
-      </View>
-
-      {isNew ? (
-        <View style={styles.editIcon}>
-          <Pencil size={24} color={t.colors.labelTertiary} />
-        </View>
-      ) : (
+    <View style={styles.row}>
+      {/* Delete button — only on existing rows in edit mode */}
+      {!isNew && isEditMode && (
         <Pressable
           onPress={onDelete}
-          android_ripple={{ color: t.colors.fillTertiary, borderless: true }}
-          style={({ pressed }) => [
-            styles.deleteBtn,
-            pressed && Platform.OS === 'ios' && { opacity: 0.6 },
-          ]}
+          style={({ pressed }) => [styles.deleteCircle, pressed && { opacity: 0.7 }]}
+          android_ripple={{ color: 'rgba(255,255,255,0.3)', borderless: true }}
           accessibilityRole="button"
           accessibilityLabel={`Xóa điểm ${index + 1}`}
         >
-          <Trash2 size={24} color={t.colors.danger} />
+          <Minus size={12} color="#fff" strokeWidth={3} />
         </Pressable>
       )}
+
+      {/* X field */}
+      <View style={styles.field}>
+        <Text style={[
+          isNew ? t.typography.footnote : t.typography.caption1,
+          styles.label,
+          { color: t.colors.labelSecondary, fontFamily: t.fontFamily },
+        ]}>
+          {isNew ? 'X' : `X${index + 1}`}
+        </Text>
+        <TextInput
+          style={[t.typography.callout, styles.input, { color: t.colors.label, fontFamily: t.fontFamily }]}
+          value={x}
+          onChangeText={onChangeX}
+          placeholder={isNew ? 'Kinh độ' : undefined}
+          placeholderTextColor={t.colors.placeholder}
+          keyboardType="numeric"
+          editable={isNew || isEditMode || !!onChangeX}
+        />
+      </View>
+
+      <View style={[styles.vSep, { backgroundColor: t.colors.separator }]} />
+
+      {/* Y field */}
+      <View style={styles.field}>
+        <Text style={[
+          isNew ? t.typography.footnote : t.typography.caption1,
+          styles.label,
+          { color: t.colors.labelSecondary, fontFamily: t.fontFamily },
+        ]}>
+          {isNew ? 'Y' : `Y${index + 1}`}
+        </Text>
+        <TextInput
+          style={[t.typography.callout, styles.input, { color: t.colors.label, fontFamily: t.fontFamily }]}
+          value={y}
+          onChangeText={onChangeY}
+          placeholder={isNew ? 'Vĩ độ' : undefined}
+          placeholderTextColor={t.colors.placeholder}
+          keyboardType="numeric"
+          editable={isNew || isEditMode || !!onChangeY}
+        />
+      </View>
+
+      {/* Add button — only on new row */}
+      {isNew && (
+        <Pressable
+          onPress={canAdd ? onAdd : undefined}
+          disabled={!canAdd}
+          style={({ pressed }) => [styles.actionBtn, pressed && Platform.OS === 'ios' && { opacity: 0.6 }]}
+          accessibilityRole="button"
+          accessibilityLabel="Thêm tọa độ"
+        >
+          <Plus size={20} color={canAdd ? t.colors.primary : t.colors.labelTertiary} />
+        </Pressable>
+      )}
+
+      {/* Spacer to keep layout consistent when no action button */}
+      {!isNew && <View style={styles.actionBtn} />}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  coordRow: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
-    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    minHeight: 50,
+    gap: 8,
   },
-  inputGroup: {
+  field: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 0.45,
+    flex: 1,
+    gap: 6,
+  },
+  label: {
+    minWidth: 22,
   },
   input: {
     flex: 1,
-    borderWidth: 1.5,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 8,
     minHeight: 44,
+    padding: 0,
   },
-  editIcon: {
-    padding: 8,
+  vSep: {
+    width: StyleSheet.hairlineWidth,
+    height: 22,
+    marginHorizontal: 4,
   },
-  deleteBtn: {
-    padding: 10,
-    borderRadius: 999,
+  actionBtn: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#FF3B30',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 2,
   },
 });
 

@@ -26,7 +26,8 @@
       "PowerShell(.specify/scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks)",
       "Bash(npx jest *)",
       "Bash(pnpm lint *)",
-      "Bash(pnpm test *)"
+      "Bash(pnpm test *)",
+      "Bash(pnpm typecheck *)"
     ]
   }
 }

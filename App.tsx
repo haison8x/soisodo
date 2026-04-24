@@ -7,11 +7,22 @@ import mobileAds from 'react-native-google-mobile-ads';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ToastProvider } from './src/components/shared/ToastProvider';
 import AdFreeService from './src/services/AdFreeService';
+import { useAppOpenAd } from './src/hooks/useAppOpenAd';
 
 mobileAds()
   .initialize()
   .then(() => AdFreeService.initialize())
   .catch(() => AdFreeService.initialize());
+
+const AppContent = () => {
+  useAppOpenAd();
+  return (
+    <>
+      <StatusBar style="auto" />
+      <TabNavigator />
+    </>
+  );
+};
 
 export default function App() {
   return (
@@ -19,8 +30,7 @@ export default function App() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <NavigationContainer>
           <ToastProvider>
-            <StatusBar style="auto" />
-            <TabNavigator />
+            <AppContent />
           </ToastProvider>
         </NavigationContainer>
       </GestureHandlerRootView>

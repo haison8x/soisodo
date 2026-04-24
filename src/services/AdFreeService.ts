@@ -33,8 +33,7 @@ const AdFreeService = {
   },
 
   isAdSuppressed(): boolean {
-    return false; // TESTING: always show ads
-    // return _isPremium || _adFreeUntil > Date.now();
+    return _isPremium || _adFreeUntil > Date.now();
   },
 
   getAdFreeRemainingMs(): number {
