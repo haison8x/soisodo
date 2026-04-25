@@ -2,7 +2,7 @@
   "expo": {
     "name": "Định Vị Nhà Đất - VN2000",
     "slug": "soitoadovn",
-    "version": "1.0.11",
+    "version": "1.0.13",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -16,7 +16,7 @@
       "supportsTablet": true
     },
     "android": {
-      "versionCode": 11,
+      "versionCode": 13,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -46,7 +46,7 @@
         "expo-build-properties",
         {
           "android": {
-            "kotlinVersion": "2.2.0"
+            "kotlinVersion": "2.1.20"
           },
           "ios": {
             "useFrameworks": "static"
@@ -59,7 +59,8 @@
           "androidAppId": "ca-app-pub-8386795729138351~2198654741",
           "iosAppId": "ca-app-pub-8386795729138351~2198654741"
         }
-      ]
+      ],
+      "./withAndroidNativeConfig"
     ],
     "extra": {
       "eas": {

@@ -71,3 +71,12 @@ Môi giới và nhà đầu tư bất động sản.
 Khảo sát viên địa chính.
 Người dân muốn kiểm tra vị trí đất đai tại nhà.
 Tải ngay Định Vị Nhà Đất - VN2000 để làm chủ dữ liệu đất đai trong tầm tay!
+
+
+
+Sensitive Keystore information:
+    Keystore password: 90837e91a8d492e26431fc818455eaa6
+    Key alias:         53d2a70dd05481779f39dedcfd044365
+    Key password:      e7665b62732632d06c5e5094657467fa
+
+    Path to Keystore:  @tranhiepgold__soitoadovn.jks

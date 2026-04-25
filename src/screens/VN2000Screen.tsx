@@ -28,7 +28,9 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BannerAdSize } from 'react-native-google-mobile-ads';
 import AdBanner from '../components/AdBanner';
+import NativeAdBanner from '../components/NativeAdBanner';
 import { useInterstitialAd } from '../hooks/useInterstitialAd';
 import { useTheme } from '../theme/ThemeProvider';
 import type { WGS84Point } from '../types';
@@ -206,6 +208,7 @@ const VN2000Screen = () => {
               Chọn đúng Tỉnh/Thành phố để có kết quả chính xác nhất. Hệ tọa độ VN2000 sử dụng kinh tuyến trục địa phương khác nhau cho từng tỉnh.
             </Text>
           </View>
+          {!result && <NativeAdBanner />}
         </ScrollView>
       </KeyboardAvoidingView>
 
