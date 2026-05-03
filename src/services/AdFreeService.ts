@@ -25,15 +25,15 @@ const AdFreeService = {
   },
 
   isPremium(): boolean {
-    return true; // Hardcoded for testing
+    return _isPremium;
   },
 
   isAdFreePeriodActive(): boolean {
-    return false;
+    return _adFreeUntil > Date.now();
   },
 
   isAdSuppressed(): boolean {
-    return true; // Hardcoded for testing
+    return _isPremium || AdFreeService.isAdFreePeriodActive();
   },
 
   getAdFreeRemainingMs(): number {

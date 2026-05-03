@@ -6,28 +6,28 @@ import { ShieldCheck } from 'lucide-react-native';
 import ScreenHeader from '../../components/shared/ScreenHeader';
 import { useTheme } from '../../theme/ThemeProvider';
 
-const LAST_UPDATED = '01/01/2025';
+const LAST_UPDATED = '03/05/2026';
 
 const SECTIONS = [
   {
-    title: '1. Thu thập thông tin',
-    body: 'Chúng tôi cam kết không thu thập bất kỳ thông tin cá nhân hay dữ liệu người dùng nào khi bạn sử dụng ứng dụng.',
+    title: '1. Thông tin thu thập',
+    body: 'Chúng tôi chỉ yêu cầu các quyền hạn cần thiết để cung cấp tính năng cốt lõi: Hình ảnh/Máy ảnh để quét tọa độ và Vị trí để hiển thị trên bản đồ. Dữ liệu hình ảnh được xử lý trực tiếp trên thiết bị của bạn.',
   },
   {
     title: '2. Sử dụng thông tin',
-    body: 'Vì không thu thập dữ liệu, chúng tôi cũng không sử dụng bất kỳ thông tin nào của bạn cho mục đích bên ngoài ứng dụng.',
+    body: 'Thông tin thu thập được chỉ dùng để thực hiện các tính năng trong ứng dụng như chuyển đổi tọa độ, hiển thị bản đồ và quản lý gói Premium của bạn thông qua hệ thống của Apple.',
   },
   {
-    title: '3. Chia sẻ thông tin',
-    body: 'Chúng tôi không chia sẻ bất kỳ dữ liệu nào với bên thứ ba.',
+    title: '3. Quảng cáo và Bên thứ ba',
+    body: 'Chúng tôi sử dụng Google AdMob để hiển thị quảng cáo trong phiên bản miễn phí. Google có thể sử dụng mã nhận dạng thiết bị để cá nhân hóa quảng cáo. Các giao dịch mua hàng được xử lý bảo mật bởi Apple.',
   },
   {
     title: '4. Bảo mật dữ liệu',
-    body: 'Mọi thao tác tính toán tọa độ được thực hiện trực tiếp trên thiết bị của bạn.',
+    body: 'Chúng tôi áp dụng các biện pháp bảo mật tiêu chuẩn để bảo vệ thông tin của bạn. Dữ liệu tọa độ của bạn được lưu trữ cục bộ trên thiết bị và không được tải lên máy chủ của chúng tôi.',
   },
   {
     title: '5. Quyền của người dùng',
-    body: 'Quyền riêng tư của bạn được bảo mật tuyệt đối vì ứng dụng hoạt động hoàn toàn ngoại tuyến với dữ liệu người dùng.',
+    body: 'Bạn có toàn quyền từ chối các quyền truy cập hoặc xóa toàn bộ dữ liệu đã lưu trong ứng dụng bất cứ lúc nào thông qua phần cài đặt thiết bị.',
   },
 ] as const;
 
@@ -47,7 +47,7 @@ const PrivacyScreen = () => {
         contentContainerStyle={styles.content}
         alwaysBounceVertical
       >
-        {/* Privacy highlight intro card — Apple HIG iOS 14+ privacy pattern */}
+        {/* Privacy highlight intro card */}
         <View
           style={[
             styles.card,
@@ -58,7 +58,7 @@ const PrivacyScreen = () => {
             },
           ]}
           accessible
-          accessibilityLabel={`Quyền riêng tư được bảo vệ. Ứng dụng hoạt động hoàn toàn offline — dữ liệu của bạn không bao giờ rời khỏi thiết bị. Cập nhật lần cuối: ${LAST_UPDATED}`}
+          accessibilityLabel={`Quyền riêng tư được bảo vệ. Chúng tôi cam kết bảo mật thông tin cá nhân của bạn. Cập nhật lần cuối: ${LAST_UPDATED}`}
         >
           <View style={styles.privacyHeader}>
             <ShieldCheck size={22} color={t.colors.primary} />
@@ -71,7 +71,7 @@ const PrivacyScreen = () => {
           </View>
 
           <Text style={[t.typography.callout, { color: t.colors.hintText, fontFamily: t.fontFamily, marginTop: 6 }]}>
-            Ứng dụng hoạt động hoàn toàn offline — dữ liệu của bạn không bao giờ rời khỏi thiết bị.
+            Chúng tôi cam kết minh bạch và bảo mật tuyệt đối dữ liệu tọa độ của bạn.
           </Text>
 
           <View style={[styles.divider, { backgroundColor: t.colors.hintBorder, marginVertical: 12 }]} />

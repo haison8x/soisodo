@@ -2,7 +2,7 @@ import os
 from PIL import Image
 
 def resize_images():
-    source_dir = "/Users/sonphan/mmo/soisodo/assets-ios/iphone"
+    source_dir = "/Users/sonphan/mmo/soisodo/tmp"
     target_size = (1242, 2688)
     
     # Kiểm tra thư mục tồn tại
