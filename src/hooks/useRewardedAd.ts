@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { RewardedAd, RewardedAdEventType, AdEventType, TestIds } from 'react-native-google-mobile-ads';
+import AdFreeService from '../services/AdFreeService';
 
 export const useRewardedAd = (adUnitId: string) => {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -34,19 +35,33 @@ export const useRewardedAd = (adUnitId: string) => {
       ad.load();
     });
 
+    const unsubError = ad.addAdEventListener(AdEventType.ERROR, (error) => {
+      console.log('Rewarded ad error:', error.message);
+      // Fallback: If ad fails, still consider it earned to not block user
+      earnedFlagRef.current = true;
+      setIsLoaded(false);
+    });
+
     ad.load();
 
     return () => {
       unsubLoaded();
       unsubEarned();
       unsubClosed();
+      unsubError();
     };
   }, [adUnitId]);
 
   const showAd = useCallback(
     (onRewarded: () => void, onDismissed?: () => void) => {
+      if (AdFreeService.isAdSuppressed()) {
+        onRewarded();
+        return;
+      }
+
       if (!isLoaded || !adRef.current) {
-        onDismissed?.();
+        // Fallback: If ad not loaded or error, grant reward anyway for better UX
+        onRewarded();
         return;
       }
       onRewardedRef.current = onRewarded;

@@ -43,3 +43,4 @@ yarn-error.*
 
 /.vscode/*
 /ui-audit/
+*.ipa

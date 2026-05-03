@@ -80,3 +80,15 @@ Sensitive Keystore information:
     Key password:      e7665b62732632d06c5e5094657467fa
 
     Path to Keystore:  @tranhiepgold__soitoadovn.jks
+
+
+
+Tôi bị lỗi sau khi submit app lên apple store, hãy thêm giao diện cho phần này và thêm các quyền cần thiết
+The app uses the AppTrackingTransparency framework, but we are unable to locate the App Tracking Transparency permission request when reviewed on iPadOS 26.4.2 and iOS 26.4.2.
+
+Kiểm tra lại logic, nếu quảng cáo nhận thưởng bị lỗi thì vẫn cho user nhận thưởng để không ảnh hưởng trải nghiệm người dùng
+
+Kiểm tra lại logic: nếu user đã mua premium thì không show quảng cáo
+
+Tôi cảm giác font chữ trên ipad quá nhỏ, không phù hợp 
+Hãy chỉnh sửa kích thước font chữ trong toàn bộ ứng dụng để nó hiển thị tốt trên ipad

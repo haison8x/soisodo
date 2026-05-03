@@ -62,6 +62,7 @@ const SettingsScreen = () => {
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [cacheSize, setCacheSize] = useState('Tính toán...');
   const [adFreeRemaining, setAdFreeRemaining] = useState(0);
+  const [premiumPrice, setPremiumPrice] = useState<string>('');
   const { showAd: showRewardedAd } = useRewardedAd(AD_UNITS.rewarded);
 
   const refreshAdFreeStatus = useCallback(() => {
@@ -100,7 +101,17 @@ const SettingsScreen = () => {
       try {
         await safeInitConnection();
         if (Platform.OS === 'android') await safeFlushAndroid();
-        try { await safeFetchProducts({ skus: itemSkus }); } catch {}
+        try {
+          const products = await safeFetchProducts({ skus: itemSkus });
+          if (products && products.length > 0) {
+            const premiumProduct = products.find(p => p.productId === itemSkus[0]);
+            if (premiumProduct) {
+              setPremiumPrice(premiumProduct.localizedPrice);
+            }
+          }
+        } catch (e) {
+          console.log('Error fetching products:', e);
+        }
         const purchases = await safeGetAvailablePurchases();
         if (purchases?.length && purchases.some((p: Purchase) => p.productId === itemSkus[0])) {
           await AsyncStorage.setItem('is_premium', 'true');
@@ -325,7 +336,7 @@ const SettingsScreen = () => {
               onPress={handlePurchase}
               disabled={isPurchasing}
               accessibilityRole="button"
-              accessibilityLabel="Mua gói Premium — 99.000 đồng"
+              accessibilityLabel={`Mua gói Premium ${premiumPrice ? "— " + premiumPrice : ""}`}
             >
               {isPurchasing ? (
                 <ActivityIndicator color={t.colors.primary} size="small" />
@@ -334,9 +345,11 @@ const SettingsScreen = () => {
                   <Text style={[styles.premiumCtaLabel, { color: t.colors.primary, fontFamily: t.fontFamily }]}>
                     Mua ngay
                   </Text>
-                  <Text style={[styles.premiumCtaPrice, { color: t.colors.primary, fontFamily: t.fontFamily }]}>
-                    99.000 đ
-                  </Text>
+                  {premiumPrice ? (
+                    <Text style={[styles.premiumCtaPrice, { color: t.colors.primary, fontFamily: t.fontFamily }]}>
+                      {premiumPrice}
+                    </Text>
+                  ) : null}
                 </>
               )}
             </Pressable>

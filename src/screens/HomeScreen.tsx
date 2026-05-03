@@ -30,6 +30,9 @@ import { toMapPoints } from '../utils/point';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { getAddressFromCoordinates } from '../utils/geocoding';
 import { useInterstitialAd } from '../hooks/useInterstitialAd';
+import { useRewardedAd } from '../hooks/useRewardedAd';
+import { AD_UNITS, SODO_REWARDED_MIN_COUNT } from '../constants/adUnits';
+import AdFreeService from '../services/AdFreeService';
 import { useToast } from '../components/shared/ToastProvider';
 import { triggerMedium, triggerSuccess } from '../utils/haptics';
 import { useTheme } from '../theme/ThemeProvider';
@@ -39,6 +42,7 @@ const HomeScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const { showAd } = useInterstitialAd();
+  const { showAd: showRewardedAd } = useRewardedAd(AD_UNITS.rewarded);
   const tabBarHeight = useBottomTabBarHeight();
   const { showToast } = useToast();
   const t = useTheme();
@@ -130,13 +134,9 @@ const HomeScreen = () => {
 
   const handleViewMap = () => {
     if (coordinates.length === 0) return;
-    setIsViewingMap(true);
     triggerMedium();
     const mapData = toMapPoints(title, selectedCity.value, coordinates);
-    showAd(() => {
-      setIsViewingMap(false);
-      (navigation as any).navigate('Map', { mapData });
-    });
+    (navigation as any).navigate('Map', { mapData });
   };
 
   const handleSaveProject = async (saveTitle: string) => {
@@ -180,7 +180,33 @@ const HomeScreen = () => {
           { text: 'Ghi đè', onPress: () => saveData(true) },
         ]);
       } else {
-        saveData(false);
+        // Kiểm tra giới hạn 10 sổ đỏ
+        if (existingProjects.length >= SODO_REWARDED_MIN_COUNT && !AdFreeService.isPremium()) {
+          Alert.alert(
+            'Giới hạn sổ đỏ',
+            `Bạn đã lưu ${existingProjects.length} sổ đỏ. Hãy xem một quảng cáo ngắn để lưu thêm hoặc nâng cấp bản Pro để lưu không giới hạn.`,
+            [
+              { text: 'Hủy', style: 'cancel' },
+              {
+                text: 'Mua bản Pro',
+                onPress: () => {
+                  // Chuyển đến màn hình Settings (Tab thứ 5)
+                  navigation.navigate('Cài đặt' as never);
+                },
+              },
+              {
+                text: 'Xem quảng cáo',
+                onPress: () => {
+                  showRewardedAd(() => {
+                    saveData(false);
+                  });
+                },
+              },
+            ],
+          );
+        } else {
+          saveData(false);
+        }
       }
     } catch {
       Alert.alert('Lỗi', 'Lỗi khi lưu dự án');

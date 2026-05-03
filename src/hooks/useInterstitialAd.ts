@@ -12,13 +12,25 @@ export const useInterstitialAd = () => {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
+    if (AdFreeService.isAdSuppressed()) return;
+
     const unsubscribeLoaded = interstitial.addAdEventListener(AdEventType.LOADED, () => {
       setLoaded(true);
     });
 
     const unsubscribeClosed = interstitial.addAdEventListener(AdEventType.CLOSED, () => {
       setLoaded(false);
-      interstitial.load();
+      if (!AdFreeService.isAdSuppressed()) {
+        interstitial.load();
+      }
+    });
+
+    const unsubscribeError = interstitial.addAdEventListener(AdEventType.ERROR, () => {
+      setLoaded(false);
+      // Try reload later if not suppressed
+      setTimeout(() => {
+        if (!AdFreeService.isAdSuppressed()) interstitial.load();
+      }, 10000);
     });
 
     interstitial.load();
@@ -26,6 +38,7 @@ export const useInterstitialAd = () => {
     return () => {
       unsubscribeLoaded();
       unsubscribeClosed();
+      unsubscribeError();
     };
   }, []);
 
@@ -37,12 +50,13 @@ export const useInterstitialAd = () => {
       }
 
       if (loaded) {
-        const unsubscribeEarned = interstitial.addAdEventListener(AdEventType.CLOSED, () => {
+        const unsubscribeClosed = interstitial.addAdEventListener(AdEventType.CLOSED, () => {
           onComplete?.();
-          unsubscribeEarned();
+          unsubscribeClosed();
         });
         interstitial.show();
       } else {
+        // Fallback: If not loaded, proceed anyway
         onComplete?.();
         interstitial.load();
       }

@@ -1,14 +1,16 @@
-// Matches iOS Dynamic Type approximate sizes
+import { fontScale } from '../utils/responsive';
+
+// Matches iOS Dynamic Type approximate sizes, now with responsive scaling for iPad
 export const Typography = {
   fontSizes: {
-    xs: 11,   // caption2
-    sm: 12,   // caption1
-    md: 14,   // subheadline / footnote
-    base: 16, // body
-    lg: 17,   // headline
-    xl: 20,   // title3
-    xxl: 24,  // title2
-    xxxl: 28, // title1 / largeTitle
+    xs: fontScale(11),   // caption2
+    sm: fontScale(12),   // caption1
+    md: fontScale(14),   // subheadline / footnote
+    base: fontScale(16), // body
+    lg: fontScale(17),   // headline
+    xl: fontScale(20),   // title3
+    xxl: fontScale(24),  // title2
+    xxxl: fontScale(28), // title1 / largeTitle
   },
   fontWeights: {
     regular: '400' as const,

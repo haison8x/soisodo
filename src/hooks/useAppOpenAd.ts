@@ -14,6 +14,7 @@ export const useAppOpenAd = () => {
 
   useEffect(() => {
     if (Platform.OS === 'web') return;
+    if (AdFreeService.isAdSuppressed()) return;
 
     const unitId = __DEV__ ? TestIds.APP_OPEN : AD_UNITS.appOpen;
     const ad = AppOpenAd.createForAdRequest(unitId, { requestNonPersonalizedAdsOnly: true });
@@ -25,7 +26,9 @@ export const useAppOpenAd = () => {
     const unsubClosed = ad.addAdEventListener(AdEventType.CLOSED, () => {
       isLoadedRef.current = false;
       lastShownRef.current = Date.now();
-      ad.load();
+      if (!AdFreeService.isAdSuppressed()) {
+        ad.load();
+      }
     });
 
     ad.load();
@@ -34,7 +37,13 @@ export const useAppOpenAd = () => {
       if (AdFreeService.isAdSuppressed()) return;
       if (!isLoadedRef.current) return;
       if (Date.now() - lastShownRef.current < THROTTLE_MS) return;
-      ad.show();
+      
+      try {
+        ad.show();
+      } catch (error) {
+        console.warn('AppOpenAd show error:', error);
+        isLoadedRef.current = false;
+      }
     };
 
     const subscription = AppState.addEventListener('change', (nextState) => {

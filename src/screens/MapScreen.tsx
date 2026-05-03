@@ -16,14 +16,13 @@ import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { View, StyleSheet, Text, Platform, Pressable, Linking, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { nanoid } from 'nanoid/non-secure';
-import {
+import MapLibre, {
   MapView,
   Camera,
   ShapeSource,
   CircleLayer,
   LineLayer,
   UserLocation,
-  setConnected,
 } from '@maplibre/maplibre-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
@@ -41,7 +40,9 @@ import type { HomeStackParamList } from '../types/navigation';
 
 const MAPTILER_KEY = process.env.EXPO_PUBLIC_MAPTILER_KEY ?? '';
 
-setConnected(true);
+if (MapLibre.setConnected) {
+  MapLibre.setConnected(true);
+}
 
 interface MapStyle { id: string; name: string }
 

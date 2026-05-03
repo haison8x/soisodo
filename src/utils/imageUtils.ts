@@ -31,6 +31,9 @@ export const pickImageAndSave = async (): Promise<string | null> => {
     const source = await showSourcePicker();
     if (!source) return null;
 
+    // Thêm delay nhỏ để tránh xung đột UI giữa ActionSheet và ImagePicker trên Simulator
+    await new Promise(resolve => setTimeout(resolve, 10));
+
     let result: ImagePicker.ImagePickerResult;
     if (source === 'camera') {
       const permission = await ImagePicker.requestCameraPermissionsAsync();
@@ -38,14 +41,24 @@ export const pickImageAndSave = async (): Promise<string | null> => {
         Alert.alert('Lỗi', 'Cần quyền truy cập máy ảnh để chụp hình');
         return null;
       }
-      result = await ImagePicker.launchCameraAsync({ allowsEditing: true, quality: 1 });
+      result = await ImagePicker.launchCameraAsync({ allowsEditing: false, quality: 1 });
     } else {
       const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
         Alert.alert('Lỗi', 'Cần quyền truy cập thư viện để chọn hình');
         return null;
       }
-      result = await ImagePicker.launchImageLibraryAsync({ allowsEditing: true, quality: 1 });
+      // Sử dụng requestAnimationFrame để đảm bảo ImagePicker mở ra khi UI đã ổn định
+      result = await new Promise<ImagePicker.ImagePickerResult>(resolve => {
+        requestAnimationFrame(async () => {
+          const res = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsEditing: false,
+            quality: 1,
+          });
+          resolve(res);
+        });
+      });
     }
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
@@ -61,7 +74,7 @@ export const pickImageAndSave = async (): Promise<string | null> => {
 
 export const exrtactTextFromImage = async (imageUri: string): Promise<string | null> => {
   try {
-     
+
     const result = await (TextRecognition as any).recognize(imageUri);
 
     if (result?.text) {
