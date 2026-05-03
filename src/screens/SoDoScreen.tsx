@@ -86,7 +86,10 @@ const SoDoScreen = () => {
   };
 
   const handleEdit = (project: Project) => {
-    (navigation as any).navigate('Trang chủ', { projectData: project });
+    (navigation as any).navigate('Trang chủ', {
+      screen: 'HomeMain',
+      params: { projectData: project },
+    });
   };
 
   // dd/MM/yyyy per CLAUDE.md convention
@@ -99,18 +102,29 @@ const SoDoScreen = () => {
   };
 
   const renderItem = ({ item }: { item: Project }) => (
-    <View style={[styles.projectCard, t.shadow.sm, { backgroundColor: t.colors.surface, borderRadius: t.radius.lg }]}>
+    <Pressable
+      style={({ pressed }) => [
+        styles.projectCard,
+        t.shadow.sm,
+        { backgroundColor: t.colors.surface, borderRadius: t.radius.lg },
+        pressed && Platform.OS === 'ios' && { opacity: 0.7 },
+      ]}
+      android_ripple={{ color: t.colors.fillTertiary }}
+      onPress={() => {
+        Alert.alert(
+          'Tùy chọn dự án',
+          item.title,
+          [
+            { text: 'Xem bản đồ', onPress: () => viewProject(item) },
+            { text: 'Chỉnh sửa', onPress: () => handleEdit(item) },
+            { text: 'Xóa dự án', style: 'destructive', onPress: () => deleteProject(item.id) },
+            { text: 'Đóng', style: 'cancel' },
+          ]
+        );
+      }}
+    >
       <View style={styles.cardHeader}>
-        <Pressable
-          style={({ pressed }) => [
-            styles.titleInfoArea,
-            pressed && Platform.OS === 'ios' && { opacity: 0.75 },
-          ]}
-          android_ripple={{ color: t.colors.fillTertiary }}
-          onPress={() => viewProject(item)}
-          accessibilityRole="button"
-          accessibilityLabel={`Xem bản đồ ${item.title}`}
-        >
+        <View style={styles.titleInfoArea}>
           <View style={[styles.iconBox, { borderRadius: t.radius.md, backgroundColor: t.colors.primaryLight }]}>
             <FileText size={24} color={t.colors.primary} />
           </View>
@@ -125,58 +139,25 @@ const SoDoScreen = () => {
               </Text>
             </View>
           </View>
-        </Pressable>
-
-        <View style={styles.actionButtons}>
-          {/* padding 12 = Spacing.md, total: 12+20+12 = 44pt ✓ */}
-          <Pressable
-            onPress={() => handleEdit(item)}
-            style={({ pressed }) => [
-              styles.iconBtn,
-              pressed && Platform.OS === 'ios' && { opacity: 0.75 },
-            ]}
-            android_ripple={{ color: t.colors.fillTertiary, borderless: true }}
-            accessibilityRole="button"
-            accessibilityLabel={`Chỉnh sửa ${item.title}`}
-          >
-            <Edit3 size={20} color={t.colors.primary} />
-          </Pressable>
-          <Pressable
-            onPress={() => deleteProject(item.id)}
-            style={({ pressed }) => [
-              styles.iconBtn,
-              pressed && Platform.OS === 'ios' && { opacity: 0.75 },
-            ]}
-            android_ripple={{ color: t.colors.fillTertiary, borderless: true }}
-            accessibilityRole="button"
-            accessibilityLabel={`Xóa ${item.title}`}
-          >
-            <Trash2 size={20} color={t.colors.danger} />
-          </Pressable>
         </View>
+        <ChevronRight size={20} color={t.colors.separator} />
       </View>
 
-      <Pressable
-        onPress={() => viewProject(item)}
-        android_ripple={{ color: t.colors.fillTertiary }}
-      >
-        <View style={[styles.cardFooter, { borderTopColor: t.colors.separator }]}>
-          <View style={styles.metaInfo}>
-            <Calendar size={14} color={t.colors.labelTertiary} />
-            <Text style={[t.typography.caption1, { color: t.colors.labelTertiary, marginLeft: 4, fontFamily: t.fontFamily }]}>
-              {formatDate(item.createdAt)}
-            </Text>
-          </View>
-          <View style={styles.metaInfo}>
-            <Map size={14} color={t.colors.labelTertiary} />
-            <Text style={[t.typography.caption1, { color: t.colors.labelTertiary, marginLeft: 4, fontFamily: t.fontFamily }]}>
-              {item.coordinates.length} điểm
-            </Text>
-          </View>
-          <ChevronRight size={16} color={t.colors.separator} />
+      <View style={[styles.cardFooter, { borderTopColor: t.colors.separator }]}>
+        <View style={styles.metaInfo}>
+          <Calendar size={14} color={t.colors.labelTertiary} />
+          <Text style={[t.typography.caption1, { color: t.colors.labelTertiary, marginLeft: 4, fontFamily: t.fontFamily }]}>
+            {formatDate(item.createdAt)}
+          </Text>
         </View>
-      </Pressable>
-    </View>
+        <View style={styles.metaInfo}>
+          <Map size={14} color={t.colors.labelTertiary} />
+          <Text style={[t.typography.caption1, { color: t.colors.labelTertiary, marginLeft: 4, fontFamily: t.fontFamily }]}>
+            {item.coordinates.length} điểm
+          </Text>
+        </View>
+      </View>
+    </Pressable>
   );
 
   return (
@@ -238,8 +219,8 @@ const styles = StyleSheet.create({
   titleInfo: { flex: 1 },
   titleInfoArea: { flex: 1, flexDirection: 'row', alignItems: 'center' },
   addressRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
-  actionButtons: { flexDirection: 'row', alignItems: 'center' },
-  iconBtn: { padding: 12, marginLeft: 4 }, // 12+20+12 = 44pt ✓
+  actionButtons: { flexDirection: 'row', alignItems: 'center', zIndex: 99 },
+  iconBtn: { padding: 12 }, 
   cardFooter: {
     flexDirection: 'row',
     alignItems: 'center',

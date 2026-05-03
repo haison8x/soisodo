@@ -37,6 +37,7 @@ import { useToast } from '../components/shared/ToastProvider';
 import { triggerMedium, triggerSuccess } from '../utils/haptics';
 import { useTheme } from '../theme/ThemeProvider';
 import type { City, Coordinate, Project } from '../types';
+import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 
 const HomeScreen = () => {
   const navigation = useNavigation();
@@ -85,6 +86,28 @@ const HomeScreen = () => {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [(route.params as { projectData?: Project } | undefined)?.projectData]);
+
+  // Reset screen when user leaves (switches tab)
+  useFocusEffect(
+    React.useCallback(() => {
+      return () => {
+        // This runs when the screen is blurred (unfocused)
+        // We only reset if we're NOT going to the Map screen
+        const state = navigation.getState();
+        const currentRoute = state?.routes[state.index];
+        const isGoingToMap = currentRoute?.name === 'Map';
+
+        if (!isGoingToMap) {
+          setTitle('Nhà Tôi');
+          setCoordinates(INITIAL_COORDINATES);
+          setModalVisible(false);
+          setEditModalVisible(false);
+          setSaveModalVisible(false);
+          setIsEditMode(false);
+        }
+      };
+    }, [navigation])
+  );
 
   const handleScan = async () => {
     setIsScanning(true);

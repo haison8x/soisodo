@@ -24,6 +24,7 @@ const TabNavigator = () => {
     <View style={{ flex: 1 }}>
       <Tab.Navigator
         screenOptions={({ route }) => ({
+          unmountOnBlur: true,
           tabBarIcon: ({ focused, color }) => {
             let IconComponent: React.ComponentType<{ size: number; color: string; strokeWidth: number }>;
 
@@ -65,11 +66,49 @@ const TabNavigator = () => {
           tabBarBackground: () => null,
         })}
       >
-        <Tab.Screen name="Trang chủ" component={HomeStack} />
-        <Tab.Screen name="VN2000" component={VN2000Stack} />
-        <Tab.Screen name="Sổ đỏ" component={SoDoScreen} />
-        <Tab.Screen name="Quy hoạch" component={PlanningScreen} />
-        <Tab.Screen name="Cài đặt" component={SettingsStack} />
+        <Tab.Screen 
+          name="Trang chủ" 
+          component={HomeStack} 
+          options={{ unmountOnBlur: true }}
+          listeners={({ navigation }) => ({
+            tabPress: (e) => {
+              e.preventDefault();
+              navigation.navigate('Trang chủ', { screen: 'HomeMain' });
+            },
+          })}
+        />
+        <Tab.Screen 
+          name="VN2000" 
+          component={VN2000Stack} 
+          options={{ unmountOnBlur: true }}
+          listeners={({ navigation }) => ({
+            tabPress: (e) => {
+              e.preventDefault();
+              navigation.navigate('VN2000', { screen: 'VN2000Main' });
+            },
+          })}
+        />
+        <Tab.Screen 
+          name="Sổ đỏ" 
+          component={SoDoScreen} 
+          options={{ unmountOnBlur: true }}
+        />
+        <Tab.Screen 
+          name="Quy hoạch" 
+          component={PlanningScreen} 
+          options={{ unmountOnBlur: true }}
+        />
+        <Tab.Screen 
+          name="Cài đặt" 
+          component={SettingsStack} 
+          options={{ unmountOnBlur: true }}
+          listeners={({ navigation }) => ({
+            tabPress: (e) => {
+              e.preventDefault();
+              navigation.navigate('Cài đặt', { screen: 'SettingsMain' });
+            },
+          })}
+        />
       </Tab.Navigator>
     </View>
   );
