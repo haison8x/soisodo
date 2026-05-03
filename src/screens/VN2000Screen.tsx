@@ -274,37 +274,39 @@ const VN2000Screen = () => {
   );
 };
 
+import { fontScale, moderateScale, verticalScale } from '../utils/responsive';
+
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { paddingVertical: 16, paddingHorizontal: 20, borderBottomWidth: StyleSheet.hairlineWidth },
-  content: { padding: 20 },
-  card: { padding: 20, marginBottom: 20 },
+  header: { paddingVertical: moderateScale(16), paddingHorizontal: moderateScale(20), borderBottomWidth: StyleSheet.hairlineWidth },
+  content: { padding: moderateScale(20) },
+  card: { padding: moderateScale(20), marginBottom: moderateScale(20) },
   inputGroup: { flex: 1 },
   input: {
-    minHeight: 48, paddingHorizontal: 16, paddingVertical: 14,
-    borderWidth: 1, fontSize: 16,
+    minHeight: verticalScale(48), paddingHorizontal: moderateScale(16), paddingVertical: moderateScale(14),
+    borderWidth: 1, fontSize: fontScale(16),
   },
   dropdown: {
-    minHeight: 48, paddingHorizontal: 16, paddingVertical: 14,
+    minHeight: verticalScale(48), paddingHorizontal: moderateScale(16), paddingVertical: moderateScale(14),
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     borderWidth: 1, overflow: 'hidden',
   },
   row: { flexDirection: 'row', justifyContent: 'space-between' },
   convertButton: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    minHeight: 50, borderRadius: 12, marginTop: 8, gap: 8, overflow: 'hidden',
+    minHeight: verticalScale(50), borderRadius: moderateScale(12), marginTop: moderateScale(8), gap: moderateScale(8), overflow: 'hidden',
   },
-  resultRow: { flexDirection: 'row', padding: 16, marginBottom: 16 },
+  resultRow: { flexDirection: 'row', padding: moderateScale(16), marginBottom: moderateScale(16) },
   resultItem: { flex: 1, alignItems: 'center' },
-  divider: { width: 1, marginHorizontal: 8 },
-  hintHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  divider: { width: 1, marginHorizontal: moderateScale(8) },
+  hintHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: moderateScale(8) },
   modalOverlay: { flex: 1, justifyContent: 'flex-end' },
-  modalContent: { borderTopLeftRadius: 24, borderTopRightRadius: 24, height: '80%', padding: 20 },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  closeBtn: { padding: 12, borderRadius: 999 },
-  searchContainer: { paddingHorizontal: 16, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
-  searchInput: { flex: 1, fontSize: 16, padding: 0 },
-  provinceItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 16, borderBottomWidth: 1 },
+  modalContent: { borderTopLeftRadius: moderateScale(24), borderTopRightRadius: moderateScale(24), height: '80%', padding: moderateScale(20) },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: moderateScale(20) },
+  closeBtn: { padding: moderateScale(12), borderRadius: 999 },
+  searchContainer: { paddingHorizontal: moderateScale(16), paddingVertical: moderateScale(8), flexDirection: 'row', alignItems: 'center', marginBottom: moderateScale(16) },
+  searchInput: { flex: 1, fontSize: fontScale(16), padding: 0 },
+  provinceItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: moderateScale(16), borderBottomWidth: 1 },
 });
 
 export default VN2000Screen;

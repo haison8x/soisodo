@@ -56,29 +56,13 @@ const TabNavigator = () => {
             paddingTop: 8,
           },
           tabBarStyle: {
-            position: 'absolute',
-            bottom: safeBottom,
-            left: 10,
-            right: 10,
-            height: tabBarHeight,
-            borderTopWidth: 0,
-            elevation: 0,
-            backgroundColor: 'transparent',
+            height: tabBarHeight + insets.bottom,
+            backgroundColor: Colors.surface,
+            borderTopWidth: StyleSheet.hairlineWidth,
+            borderTopColor: Colors.separator,
+            paddingBottom: insets.bottom,
           },
-          tabBarBackground: () => (
-            <View
-              style={{
-                flex: 1,
-                backgroundColor: Colors.surface,
-                borderRadius: Radius.md,
-                shadowColor: Colors.shadow,
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.15,
-                shadowRadius: 12,
-                elevation: 8,
-              }}
-            />
-          ),
+          tabBarBackground: () => null,
         })}
       >
         <Tab.Screen name="Trang chủ" component={HomeStack} />

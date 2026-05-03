@@ -91,4 +91,4 @@ Kiểm tra lại logic, nếu quảng cáo nhận thưởng bị lỗi thì vẫ
 Kiểm tra lại logic: nếu user đã mua premium thì không show quảng cáo
 
 Tôi cảm giác font chữ trên ipad quá nhỏ, không phù hợp 
-Hãy chỉnh sửa kích thước font chữ trong toàn bộ ứng dụng để nó hiển thị tốt trên ipad
+Hãy dùng thư viện react-native-responsive-screen để đảm bảo mọi thứ hiển thị tốt trên mọi thiết bị, tablet và điện thoại

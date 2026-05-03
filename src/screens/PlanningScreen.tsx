@@ -76,12 +76,14 @@ const openAppSearch = (appName: string) => {
   openURL(url);
 };
 
+import { fontScale, moderateScale, verticalScale } from '../utils/responsive';
+
 const PlanningCard = ({ item }: { item: PlanningItem }) => {
   const t = useTheme();
   const hasActions = !!(item.web || item.app);
 
   return (
-    <View style={[styles.card, { backgroundColor: t.colors.surface }, t.shadow.sm]}>
+    <View style={[styles.card, { backgroundColor: t.colors.surface, borderRadius: t.radius.lg }, t.shadow.sm]}>
       {/* Province badge + name */}
       <View style={styles.cardHeader}>
         <View style={[styles.provinceBadge, { backgroundColor: t.colors.fillSecondary, borderRadius: t.radius.sm }]}>
@@ -112,7 +114,7 @@ const PlanningCard = ({ item }: { item: PlanningItem }) => {
           accessibilityRole="link"
           accessibilityLabel={`Mở website ${item.name}: ${getDomain(item.web)}`}
         >
-          <Globe size={17} color={t.colors.primary} />
+          <Globe size={moderateScale(18)} color={t.colors.primary} />
           <View style={styles.actionContent}>
             <Text style={[t.typography.callout, { color: t.colors.label, fontFamily: t.fontFamily }]}>
               Mở website
@@ -121,13 +123,13 @@ const PlanningCard = ({ item }: { item: PlanningItem }) => {
               {getDomain(item.web)}
             </Text>
           </View>
-          <ChevronRight size={16} color={t.colors.labelTertiary} />
+          <ChevronRight size={moderateScale(18)} color={t.colors.labelTertiary} />
         </Pressable>
       )}
 
       {/* Indented separator between two action rows */}
       {item.web && item.app && (
-        <View style={[styles.divider, { backgroundColor: t.colors.separator, marginLeft: 43 }]} />
+        <View style={[styles.divider, { backgroundColor: t.colors.separator, marginLeft: moderateScale(43) }]} />
       )}
 
       {/* App store row — tappable, opens App Store / CH Play search */}
@@ -142,7 +144,7 @@ const PlanningCard = ({ item }: { item: PlanningItem }) => {
           accessibilityRole="button"
           accessibilityLabel={`Tìm ứng dụng ${item.app} trên cửa hàng ứng dụng`}
         >
-          <Smartphone size={17} color={t.colors.success} />
+          <Smartphone size={moderateScale(18)} color={t.colors.success} />
           <View style={styles.actionContent}>
             <Text style={[t.typography.callout, { color: t.colors.label, fontFamily: t.fontFamily }]}>
               {item.app}
@@ -151,14 +153,14 @@ const PlanningCard = ({ item }: { item: PlanningItem }) => {
               {Platform.OS === 'ios' ? 'Tìm trên App Store' : 'Tìm trên CH Play'}
             </Text>
           </View>
-          <ChevronRight size={16} color={t.colors.labelTertiary} />
+          <ChevronRight size={moderateScale(18)} color={t.colors.labelTertiary} />
         </Pressable>
       )}
 
       {/* Feature note */}
       <View style={[styles.divider, { backgroundColor: t.colors.separator }]} />
       <View style={styles.featureRow}>
-        <Info size={14} color={t.colors.labelTertiary} style={{ marginTop: 1 }} />
+        <Info size={moderateScale(14)} color={t.colors.labelTertiary} style={{ marginTop: 1 }} />
         <Text style={[t.typography.footnote, styles.featureText, { color: t.colors.labelSecondary, fontFamily: t.fontFamily }]}>
           {item.features}
         </Text>
@@ -187,7 +189,7 @@ const PlanningScreen = () => {
         {/* Intro banner — primary tint, icon in rounded square */}
         <View style={[styles.introBanner, { backgroundColor: t.colors.primaryLight, borderRadius: t.radius.lg }]}>
           <View style={[styles.introIconWrap, { backgroundColor: t.colors.fillPrimary, borderRadius: t.radius.md }]}>
-            <MapIcon size={24} color={t.colors.primary} />
+            <MapIcon size={moderateScale(24)} color={t.colors.primary} />
           </View>
           <Text style={[t.typography.callout, { color: t.colors.label, flex: 1, fontFamily: t.fontFamily }]}>
             Danh sách cổng thông tin và ứng dụng quy hoạch chính thức. Nhấn để truy cập hoặc tìm trên{' '}
@@ -212,40 +214,39 @@ const PlanningScreen = () => {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: {
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingHorizontal: moderateScale(20),
+    paddingVertical: moderateScale(14),
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   scrollView: { flex: 1 },
   scrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    gap: 12,
+    paddingHorizontal: moderateScale(16),
+    paddingTop: moderateScale(16),
+    gap: moderateScale(12),
   },
   introBanner: {
-    padding: 16,
+    padding: moderateScale(16),
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: moderateScale(12),
   },
   introIconWrap: {
-    width: 44,
-    height: 44,
+    width: moderateScale(44),
+    height: moderateScale(44),
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
   },
   card: {
-    borderRadius: 12,
     overflow: 'hidden',
   },
   cardHeader: {
-    padding: 16,
-    gap: 6,
+    padding: moderateScale(16),
+    gap: moderateScale(6),
   },
   provinceBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingHorizontal: moderateScale(8),
+    paddingVertical: moderateScale(3),
     alignSelf: 'flex-start',
   },
   provinceBadgeText: {
@@ -258,10 +259,10 @@ const styles = StyleSheet.create({
   actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 11,
-    minHeight: 44,
-    gap: 10,
+    paddingHorizontal: moderateScale(16),
+    paddingVertical: moderateScale(11),
+    minHeight: verticalScale(44),
+    gap: moderateScale(10),
   },
   actionContent: {
     flex: 1,
@@ -269,9 +270,9 @@ const styles = StyleSheet.create({
   featureRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 8,
+    paddingHorizontal: moderateScale(16),
+    paddingVertical: moderateScale(12),
+    gap: moderateScale(8),
   },
   featureText: {
     flex: 1,
@@ -279,7 +280,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     textAlign: 'center',
-    paddingVertical: 8,
+    paddingVertical: moderateScale(8),
   },
 });
 

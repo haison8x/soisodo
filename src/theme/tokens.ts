@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import type { TextStyle, ViewStyle } from 'react-native';
+import { fontScale, moderateScale } from '../utils/responsive';
 
 // ─── COLORS (semantic, light + dark) ───────────────────────────────────────
 
@@ -48,10 +49,19 @@ export const colorTokens = {
   shadow:            { light: '#000000', dark: '#000000' },
 } as const satisfies Record<string, ColorPair>;
 
+
 // ─── SPACING (scale 4/8) ─────────────────────────────────────────────────────
 
 export const spacing = {
-  xs: 4, sm: 8, md: 12, base: 16, lg: 20, xl: 24, xxl: 32, section: 40, huge: 56,
+  xs: moderateScale(4, 0.25),
+  sm: moderateScale(8, 0.25),
+  md: moderateScale(12, 0.25),
+  base: moderateScale(16, 0.25),
+  lg: moderateScale(20, 0.25),
+  xl: moderateScale(24, 0.25),
+  xxl: moderateScale(32, 0.25),
+  section: moderateScale(40, 0.25),
+  huge: moderateScale(56, 0.25),
 } as const;
 
 // ─── RADIUS ──────────────────────────────────────────────────────────────────
@@ -60,22 +70,21 @@ export const radius = {
   xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, full: 9999,
 } as const;
 
-// ─── TYPOGRAPHY (Apple HIG scale) ────────────────────────────────────────────
 
 type TypeStyle = Pick<TextStyle, 'fontSize' | 'lineHeight' | 'fontWeight' | 'letterSpacing'>;
 
 export const typography = {
-  largeTitle:  { fontSize: 34, lineHeight: 41, fontWeight: '700' as const, letterSpacing: 0.37 },
-  title1:      { fontSize: 28, lineHeight: 34, fontWeight: '700' as const, letterSpacing: 0.36 },
-  title2:      { fontSize: 22, lineHeight: 28, fontWeight: '700' as const, letterSpacing: 0.35 },
-  title3:      { fontSize: 20, lineHeight: 25, fontWeight: '600' as const, letterSpacing: 0.38 },
-  headline:    { fontSize: 17, lineHeight: 22, fontWeight: '600' as const, letterSpacing: -0.41 },
-  body:        { fontSize: 17, lineHeight: 22, fontWeight: '400' as const, letterSpacing: -0.41 },
-  callout:     { fontSize: 16, lineHeight: 21, fontWeight: '400' as const, letterSpacing: -0.32 },
-  subheadline: { fontSize: 15, lineHeight: 20, fontWeight: '400' as const, letterSpacing: -0.24 },
-  footnote:    { fontSize: 13, lineHeight: 18, fontWeight: '400' as const, letterSpacing: -0.08 },
-  caption1:    { fontSize: 12, lineHeight: 16, fontWeight: '400' as const, letterSpacing: 0 },
-  caption2:    { fontSize: 11, lineHeight: 13, fontWeight: '400' as const, letterSpacing: 0.07 },
+  largeTitle:  { fontSize: fontScale(34), lineHeight: fontScale(41), fontWeight: '700' as const, letterSpacing: 0.37 },
+  title1:      { fontSize: fontScale(28), lineHeight: fontScale(34), fontWeight: '700' as const, letterSpacing: 0.36 },
+  title2:      { fontSize: fontScale(22), lineHeight: fontScale(28), fontWeight: '700' as const, letterSpacing: 0.35 },
+  title3:      { fontSize: fontScale(20), lineHeight: fontScale(25), fontWeight: '600' as const, letterSpacing: 0.38 },
+  headline:    { fontSize: fontScale(17), lineHeight: fontScale(22), fontWeight: '600' as const, letterSpacing: -0.41 },
+  body:        { fontSize: fontScale(17), lineHeight: fontScale(22), fontWeight: '400' as const, letterSpacing: -0.41 },
+  callout:     { fontSize: fontScale(16), lineHeight: fontScale(21), fontWeight: '400' as const, letterSpacing: -0.32 },
+  subheadline: { fontSize: fontScale(15), lineHeight: fontScale(20), fontWeight: '400' as const, letterSpacing: -0.24 },
+  footnote:    { fontSize: fontScale(13), lineHeight: fontScale(18), fontWeight: '400' as const, letterSpacing: -0.08 },
+  caption1:    { fontSize: fontScale(12), lineHeight: fontScale(16), fontWeight: '400' as const, letterSpacing: 0 },
+  caption2:    { fontSize: fontScale(11), lineHeight: fontScale(13), fontWeight: '400' as const, letterSpacing: 0.07 },
 } as const satisfies Record<string, TypeStyle>;
 
 // ─── FONT FAMILY ─────────────────────────────────────────────────────────────
