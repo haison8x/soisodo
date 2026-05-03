@@ -38,11 +38,7 @@ import type { MapData, Project } from '../types';
 import type { RouteProp } from '@react-navigation/native';
 import type { HomeStackParamList } from '../types/navigation';
 
-const MAPTILER_KEY = process.env.EXPO_PUBLIC_MAPTILER_KEY ?? '';
-
-if (MapLibre.setConnected) {
-  MapLibre.setConnected(true);
-}
+const MAPTILER_KEY = '8DY7FmNFHpdvQiaVc2gb';
 
 interface MapStyle { id: string; name: string }
 
@@ -227,7 +223,12 @@ const MapScreen = () => {
 
   return (
     <View style={styles.container}>
-      <MapView style={styles.map} logoEnabled={false} attributionEnabled={false} mapStyle={currentStyleURL}>
+      <MapView
+        style={styles.map}
+        logoEnabled={false}
+        attributionEnabled={false}
+        mapStyle={currentStyleURL}
+      >
         <Camera
           ref={cameraRef}
           defaultSettings={{ centerCoordinate: firstPoint ? [firstPoint.longitude, firstPoint.latitude] : [106.660172, 10.762622], zoomLevel: 17 }}

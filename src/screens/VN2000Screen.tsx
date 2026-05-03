@@ -37,6 +37,8 @@ import type { WGS84Point } from '../types';
 import { triggerMedium } from '../utils/haptics';
 import { convertVN2000ToWGS84, proj4Dict } from '../utils/point';
 
+import { fontScale, moderateScale, verticalScale } from '../utils/responsive';
+
 interface Province { key: string; label: string }
 
 const VN2000Screen = () => {
@@ -273,8 +275,6 @@ const VN2000Screen = () => {
     </SafeAreaView>
   );
 };
-
-import { fontScale, moderateScale, verticalScale } from '../utils/responsive';
 
 const styles = StyleSheet.create({
   container: { flex: 1 },

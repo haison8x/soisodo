@@ -104,9 +104,9 @@ const SettingsScreen = () => {
         try {
           const products = await safeFetchProducts({ skus: itemSkus });
           if (products && products.length > 0) {
-            const premiumProduct = products.find(p => p.productId === itemSkus[0]);
+            const premiumProduct = products.find(p => p.id === itemSkus[0]);
             if (premiumProduct) {
-              setPremiumPrice(premiumProduct.localizedPrice);
+              setPremiumPrice(premiumProduct.displayPrice);
             }
           }
         } catch (e) {

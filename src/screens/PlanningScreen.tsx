@@ -5,6 +5,8 @@ import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { Globe, Smartphone, Info, Map as MapIcon, ChevronRight } from 'lucide-react-native';
 import { useTheme } from '../theme/ThemeProvider';
 
+import { fontScale, moderateScale, verticalScale } from '../utils/responsive';
+
 interface PlanningItem {
   province: string;
   name: string;
@@ -75,8 +77,6 @@ const openAppSearch = (appName: string) => {
     : `https://play.google.com/store/search?q=${q}&hl=vi`;
   openURL(url);
 };
-
-import { fontScale, moderateScale, verticalScale } from '../utils/responsive';
 
 const PlanningCard = ({ item }: { item: PlanningItem }) => {
   const t = useTheme();

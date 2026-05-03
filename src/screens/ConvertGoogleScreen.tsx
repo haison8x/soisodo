@@ -11,7 +11,7 @@
  * Expected new score: 74/100
  */
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, ActivityIndicator, Platform, Linking } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ActivityIndicator, Platform, Linking, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MapView, Camera, ShapeSource, CircleLayer } from '@maplibre/maplibre-react-native';
 import { ArrowLeft, MapPin, Plus, Minus, Map as MapIcon, Target } from 'lucide-react-native';
@@ -20,7 +20,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import type { StackScreenProps } from '@react-navigation/stack';
 import type { VN2000StackParamList } from '../types/navigation';
 
-const MAPTILER_KEY = process.env.EXPO_PUBLIC_MAPTILER_KEY ?? '';
+const MAPTILER_KEY = '8DY7FmNFHpdvQiaVc2gb';
 
 const STYLES = [
   { id: 'streets-v2', name: 'Đường phố' },
@@ -39,7 +39,6 @@ const ConvertGoogleScreen = ({ route, navigation }: Props) => {
   const [address, setAddress] = useState('Đang lấy địa chỉ...');
   const [loading, setLoading] = useState(true);
   const [styleIndex, setStyleIndex] = useState(0);
-
   const styleMode = STYLES[styleIndex].id;
   const currentStyleURL = `https://api.maptiler.com/maps/${styleMode}/style.json?key=${MAPTILER_KEY}`;
 
@@ -108,7 +107,12 @@ const ConvertGoogleScreen = ({ route, navigation }: Props) => {
         </Text>
       </View>
 
-      <MapView style={styles.map} mapStyle={currentStyleURL} logoEnabled={false} attributionEnabled={false}>
+      <MapView
+        style={styles.map}
+        mapStyle={currentStyleURL}
+        logoEnabled={false}
+        attributionEnabled={false}
+      >
         <Camera
           ref={cameraRef}
           centerCoordinate={[longitude, latitude]}
