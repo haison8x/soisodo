@@ -1,6 +1,6 @@
 {
   "name": "soitoadovn",
-  "version": "1.0.0",
+  "version": "1.0.0.1",
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
@@ -16,6 +16,7 @@
     "format": "prettier --write src",
     "format:check": "prettier --check src",
     "build:ios": "eas build --platform ios --local",
+    "prebuild:ios": "expo prebuild --platform ios",
     "pods": "npx pod-install"
   },
   "dependencies": {

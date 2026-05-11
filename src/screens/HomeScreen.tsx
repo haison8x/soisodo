@@ -17,7 +17,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { nanoid } from 'nanoid/non-secure';
 import { Camera, ChevronRight, ArrowLeftRight, Pencil } from 'lucide-react-native';
 
-import AdBanner from '../components/AdBanner';
 import CitySelector from '../components/HomeScreen/CitySelector';
 import CityModal from '../components/HomeScreen/CityModal';
 import CoordinateRow from '../components/HomeScreen/CoordinateRow';
@@ -352,9 +351,6 @@ const HomeScreen = () => {
               isNew
             />
           </View>
-
-          {/* In-feed ad — cuối danh sách tọa độ */}
-          <AdBanner style={{ borderRadius: 10, marginBottom: 12 }} />
 
           {/* Utility row */}
           <View style={[styles.utilityRow, t.shadow.sm, { backgroundColor: t.colors.surface }]}>

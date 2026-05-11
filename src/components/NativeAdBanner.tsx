@@ -58,7 +58,16 @@ const NativeAdBanner = ({ unitId = AD_UNITS.nativeAdvanced }: Props) => {
   }
 
   return (
-    <View style={[styles.outerContainer, { backgroundColor: t.colors.surface, borderRadius: t.radius.lg }, t.shadow.sm]}>
+    <View style={[styles.outerContainer, { backgroundColor: t.colors.surfaceSecondary, borderRadius: t.radius.lg }]}>
+      <View style={styles.adLabelContainer}>
+        <View style={[styles.adBadge, { backgroundColor: t.colors.warning }]}>
+          <Text style={[t.typography.caption2, { color: '#FFFFFF', fontWeight: 'bold' }]}>AD</Text>
+        </View>
+        <Text style={[t.typography.caption1, { color: t.colors.labelSecondary, marginLeft: 8, fontWeight: '600' }]}>
+          Quảng cáo
+        </Text>
+      </View>
+
       <NativeAdView nativeAd={nativeAd} style={styles.nativeAdView}>
         <View style={styles.content}>
           <View style={styles.header}>
@@ -85,8 +94,8 @@ const NativeAdBanner = ({ unitId = AD_UNITS.nativeAdvanced }: Props) => {
 
           <NativeAsset assetType={NativeAssetType.BODY}>
             <Text
-              style={[t.typography.callout, { color: t.colors.labelSecondary, marginTop: 8, fontFamily: t.fontFamily }]}
-              numberOfLines={3}
+              style={[t.typography.callout, { color: t.colors.labelSecondary, marginTop: 4, fontFamily: t.fontFamily }]}
+              numberOfLines={2}
             >
               {nativeAd.body}
             </Text>
@@ -132,7 +141,21 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   content: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    paddingTop: 8,
+  },
+  adLabelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 4,
+  },
+  adBadge: {
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 3,
   },
   header: {
     flexDirection: 'row',
