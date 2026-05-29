@@ -1,8 +1,8 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, StyleSheet, Platform } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Home, FileText, Settings as SettingsIcon, Map, Compass } from 'lucide-react-native';
-import { Colors, Radius, Typography } from '../theme';
+import { Colors, Typography } from '../theme';
 
 import HomeStack from './HomeStack';
 import SettingsStack from './SettingsStack';
@@ -17,14 +17,12 @@ const Tab = createBottomTabNavigator<TabParamList>();
 
 const TabNavigator = () => {
   const insets = useSafeAreaInsets();
-  const safeBottom = Math.max(insets.bottom, Platform.OS === 'ios' ? 25 : 20);
   const tabBarHeight = 80;
 
   return (
     <View style={{ flex: 1 }}>
       <Tab.Navigator
         screenOptions={({ route }) => ({
-          unmountOnBlur: true,
           tabBarIcon: ({ focused, color }) => {
             let IconComponent: React.ComponentType<{ size: number; color: string; strokeWidth: number }>;
 
@@ -69,7 +67,6 @@ const TabNavigator = () => {
         <Tab.Screen 
           name="Trang chủ" 
           component={HomeStack} 
-          options={{ unmountOnBlur: true }}
           listeners={({ navigation }) => ({
             tabPress: (e) => {
               e.preventDefault();
@@ -80,7 +77,6 @@ const TabNavigator = () => {
         <Tab.Screen 
           name="VN2000" 
           component={VN2000Stack} 
-          options={{ unmountOnBlur: true }}
           listeners={({ navigation }) => ({
             tabPress: (e) => {
               e.preventDefault();
@@ -91,17 +87,14 @@ const TabNavigator = () => {
         <Tab.Screen 
           name="Sổ đỏ" 
           component={SoDoScreen} 
-          options={{ unmountOnBlur: true }}
         />
         <Tab.Screen 
           name="Quy hoạch" 
           component={PlanningScreen} 
-          options={{ unmountOnBlur: true }}
         />
         <Tab.Screen 
           name="Cài đặt" 
           component={SettingsStack} 
-          options={{ unmountOnBlur: true }}
           listeners={({ navigation }) => ({
             tabPress: (e) => {
               e.preventDefault();

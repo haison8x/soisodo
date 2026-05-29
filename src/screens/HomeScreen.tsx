@@ -15,18 +15,19 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { nanoid } from 'nanoid/non-secure';
-import { Camera, ChevronRight, ArrowLeftRight, Pencil } from 'lucide-react-native';
 
 import CitySelector from '../components/HomeScreen/CitySelector';
 import CityModal from '../components/HomeScreen/CityModal';
-import CoordinateRow from '../components/HomeScreen/CoordinateRow';
 import CoordinateEditModal from '../components/HomeScreen/CoordinateEditModal';
 import SaveProjectModal from '../components/HomeScreen/SaveProjectModal';
+import ScanCard from '../components/HomeScreen/ScanCard';
+import UtilityRow from '../components/HomeScreen/UtilityRow';
+import CoordinatesList from '../components/HomeScreen/CoordinatesList';
 
 import { CITIES, INITIAL_COORDINATES } from '../constants/mockDataHomeScreen';
 import { pickImageAndSave, exrtactTextFromImage } from '../utils/imageUtils';
 import { toMapPoints } from '../utils/point';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { getAddressFromCoordinates } from '../utils/geocoding';
 import { useInterstitialAd } from '../hooks/useInterstitialAd';
 import { useRewardedAd } from '../hooks/useRewardedAd';
@@ -36,7 +37,6 @@ import { useToast } from '../components/shared/ToastProvider';
 import { triggerMedium, triggerSuccess } from '../utils/haptics';
 import { useTheme } from '../theme/ThemeProvider';
 import type { City, Coordinate, Project } from '../types';
-import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 
 const HomeScreen = () => {
   const navigation = useNavigation();
@@ -154,11 +154,104 @@ const HomeScreen = () => {
     const tmp = newX; setNewX(newY); setNewY(tmp);
   };
 
-  const handleViewMap = () => {
+  const getTodayDateString = () => {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  const handleViewMap = async () => {
     if (coordinates.length === 0) return;
-    triggerMedium();
-    const mapData = toMapPoints(title, selectedCity.value, coordinates);
-    (navigation as any).navigate('Map', { mapData });
+
+    if (AdFreeService.isPremium()) {
+      triggerMedium();
+      const mapData = toMapPoints(title, selectedCity.value, coordinates);
+      (navigation as any).navigate('Map', { mapData });
+      return;
+    }
+
+    try {
+      const today = getTodayDateString();
+      const usageRaw = await AsyncStorage.getItem('map_view_usage');
+      let usage = { date: today, count: 0, unlocked: false };
+
+      if (usageRaw) {
+        try {
+          const parsed = JSON.parse(usageRaw);
+          if (parsed && parsed.date === today) {
+            usage = {
+              date: today,
+              count: typeof parsed.count === 'number' ? parsed.count : 0,
+              unlocked: !!parsed.unlocked,
+            };
+          }
+        } catch (e) {
+          console.error('Error parsing map_view_usage', e);
+        }
+      }
+
+      if (usage.unlocked) {
+        triggerMedium();
+        const mapData = toMapPoints(title, selectedCity.value, coordinates);
+        (navigation as any).navigate('Map', { mapData });
+        return;
+      }
+
+      if (usage.count < 5) {
+        const nextCount = usage.count + 1;
+        const newUsage = { date: today, count: nextCount, unlocked: false };
+        await AsyncStorage.setItem('map_view_usage', JSON.stringify(newUsage));
+
+        triggerMedium();
+        const mapData = toMapPoints(title, selectedCity.value, coordinates);
+        (navigation as any).navigate('Map', { mapData });
+      } else {
+        Alert.alert(
+          'Giới hạn xem bản đồ',
+          'Bạn đã hết 5 lượt xem bản đồ miễn phí hôm nay. Hãy nâng cấp Pro để xem không giới hạn hoặc xem quảng cáo ngắn để xem bản đồ tự do cả ngày.',
+          [
+            { text: 'Hủy', style: 'cancel' },
+            {
+              text: 'Mua bản Pro',
+              onPress: () => {
+                navigation.navigate('Cài đặt' as never);
+              },
+            },
+            {
+              text: 'Xem quảng cáo',
+              onPress: () => {
+                showRewardedAd(
+                  async () => {
+                    try {
+                      const newUsage = { date: today, count: 5, unlocked: true };
+                      await AsyncStorage.setItem('map_view_usage', JSON.stringify(newUsage));
+                      triggerMedium();
+                      const mapData = toMapPoints(title, selectedCity.value, coordinates);
+                      (navigation as any).navigate('Map', { mapData });
+                    } catch (e) {
+                      showToast('Lỗi khi mở khóa xem bản đồ.', 'error');
+                    }
+                  },
+                  () => {
+                    showToast('Chưa hoàn thành xem quảng cáo. Bạn vẫn được xem bản đồ lần này.', 'info');
+                    triggerMedium();
+                    const mapData = toMapPoints(title, selectedCity.value, coordinates);
+                    (navigation as any).navigate('Map', { mapData });
+                  }
+                );
+              },
+            },
+          ]
+        );
+      }
+    } catch (err) {
+      console.error('Error checking map view count:', err);
+      triggerMedium();
+      const mapData = toMapPoints(title, selectedCity.value, coordinates);
+      (navigation as any).navigate('Map', { mapData });
+    }
   };
 
   const handleSaveProject = async (saveTitle: string) => {
@@ -287,35 +380,7 @@ const HomeScreen = () => {
           />
 
           {/* Scan card */}
-          <Pressable
-            style={({ pressed }) => [
-              styles.card,
-              t.shadow.sm,
-              { backgroundColor: t.colors.surface },
-              pressed && Platform.OS === 'ios' && { opacity: 0.85 },
-            ]}
-            android_ripple={{ color: t.colors.fillTertiary }}
-            onPress={handleScan}
-            disabled={isScanning}
-            accessibilityRole="button"
-            accessibilityLabel="Quét tọa độ từ ảnh"
-          >
-            <View style={[styles.scanIconWrap, { backgroundColor: t.colors.primaryLight }]}>
-              {isScanning
-                ? <ActivityIndicator size="small" color={t.colors.primary} />
-                : <Camera size={22} color={t.colors.primary} />
-              }
-            </View>
-            <View style={styles.scanText}>
-              <Text style={[t.typography.headline, { color: t.colors.label, fontFamily: t.fontFamily }]}>
-                Quét tọa độ từ ảnh
-              </Text>
-              <Text style={[t.typography.subheadline, styles.scanSub, { color: t.colors.labelSecondary, fontFamily: t.fontFamily }]}>
-                Tự động nhận dạng từ sổ đỏ
-              </Text>
-            </View>
-            <ChevronRight size={18} color={t.colors.labelTertiary} />
-          </Pressable>
+          <ScanCard onPress={handleScan} isScanning={isScanning} />
 
           {/* City card */}
           <View style={[styles.cardNoPad, t.shadow.sm, { backgroundColor: t.colors.surface }]}>
@@ -326,60 +391,24 @@ const HomeScreen = () => {
           <Text style={[styles.sectionHeader, { color: t.colors.labelSecondary, fontFamily: t.fontFamily }]}>
             Tọa độ{coordinates.length > 0 ? ` · ${coordinates.length} điểm` : ''}
           </Text>
-          <View style={[styles.cardNoPad, t.shadow.sm, { backgroundColor: t.colors.surface }]}>
-            {coordinates.map((coord, index) => (
-              <React.Fragment key={coord.id}>
-                <CoordinateRow
-                  index={index}
-                  x={coord.x}
-                  y={coord.y}
-                  isEditMode={isEditMode}
-                  onChangeX={val => updateCoordinate(coord.id, 'x', val)}
-                  onChangeY={val => updateCoordinate(coord.id, 'y', val)}
-                  onDelete={() => deleteCoordinate(coord.id)}
-                />
-                <View style={[styles.rowSep, { backgroundColor: t.colors.separator, marginLeft: isEditMode ? 54 : 16 }]} />
-              </React.Fragment>
-            ))}
-            <CoordinateRow
-              index={coordinates.length}
-              x={newX}
-              y={newY}
-              onChangeX={setNewX}
-              onChangeY={setNewY}
-              onAdd={addCoordinate}
-              isNew
-            />
-          </View>
+          
+          <CoordinatesList
+            coordinates={coordinates}
+            isEditMode={isEditMode}
+            newX={newX}
+            newY={newY}
+            onUpdateCoordinate={updateCoordinate}
+            onDeleteCoordinate={deleteCoordinate}
+            onNewXChange={setNewX}
+            onNewYChange={setNewY}
+            onAddCoordinate={addCoordinate}
+          />
 
           {/* Utility row */}
-          <View style={[styles.utilityRow, t.shadow.sm, { backgroundColor: t.colors.surface }]}>
-            <Pressable
-              style={({ pressed }) => [styles.utilityBtn, pressed && Platform.OS === 'ios' && { opacity: 0.6 }]}
-              android_ripple={{ color: t.colors.fillPrimary }}
-              onPress={() => { setEditText(formatCoordinatesForEdit()); setEditModalVisible(true); }}
-              accessibilityRole="button"
-              accessibilityLabel="Sửa tọa độ X và Y"
-            >
-              <Pencil size={15} color={t.colors.primary} />
-              <Text style={[t.typography.callout, styles.utilityLabel, { color: t.colors.primary, fontFamily: t.fontFamily }]}>
-                Sửa X&Y
-              </Text>
-            </Pressable>
-            <View style={[styles.utilityDivider, { backgroundColor: t.colors.separator }]} />
-            <Pressable
-              style={({ pressed }) => [styles.utilityBtn, pressed && Platform.OS === 'ios' && { opacity: 0.6 }]}
-              android_ripple={{ color: t.colors.fillPrimary }}
-              onPress={swapXY}
-              accessibilityRole="button"
-              accessibilityLabel="Hoán đổi X và Y"
-            >
-              <ArrowLeftRight size={15} color={t.colors.primary} />
-              <Text style={[t.typography.callout, styles.utilityLabel, { color: t.colors.primary, fontFamily: t.fontFamily }]}>
-                Hoán đổi X↔Y
-              </Text>
-            </Pressable>
-          </View>
+          <UtilityRow
+            onEditPress={() => { setEditText(formatCoordinatesForEdit()); setEditModalVisible(true); }}
+            onSwapPress={swapXY}
+          />
 
           {/* Primary CTA */}
           <Pressable
@@ -482,32 +511,10 @@ const styles = StyleSheet.create({
     padding: 0,
   },
 
-  card: {
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   cardNoPad: {
     borderRadius: 12,
     marginBottom: 12,
     overflow: 'hidden',
-  },
-
-  scanIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  scanText: {
-    flex: 1,
-    marginLeft: 14,
-  },
-  scanSub: {
-    marginTop: 2,
   },
 
   sectionHeader: {
@@ -517,33 +524,6 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginBottom: 6,
     marginHorizontal: 4,
-  },
-
-  rowSep: {
-    height: StyleSheet.hairlineWidth,
-    marginRight: 16,
-  },
-
-  utilityRow: {
-    flexDirection: 'row',
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginBottom: 4,
-  },
-  utilityBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    gap: 6,
-  },
-  utilityLabel: {
-    fontWeight: '500',
-  },
-  utilityDivider: {
-    width: StyleSheet.hairlineWidth,
-    marginVertical: 10,
   },
 
   primaryButton: {
