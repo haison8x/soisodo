@@ -27,7 +27,8 @@
       "Bash(npx jest *)",
       "Bash(pnpm lint *)",
       "Bash(pnpm test *)",
-      "Bash(pnpm typecheck *)"
+      "Bash(pnpm typecheck *)",
+      "Bash(pnpm type-check *)"
     ]
   }
 }

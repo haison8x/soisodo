@@ -9,7 +9,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
@@ -29,7 +28,6 @@ import { pickImageAndSave, exrtactTextFromImage } from '../utils/imageUtils';
 import { toMapPoints } from '../utils/point';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { getAddressFromCoordinates } from '../utils/geocoding';
-import { useInterstitialAd } from '../hooks/useInterstitialAd';
 import { useRewardedAd } from '../hooks/useRewardedAd';
 import { AD_UNITS, SODO_REWARDED_MIN_COUNT } from '../constants/adUnits';
 import AdFreeService from '../services/AdFreeService';
@@ -41,7 +39,6 @@ import type { City, Coordinate, Project } from '../types';
 const HomeScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { showAd } = useInterstitialAd();
   const { showAd: showRewardedAd } = useRewardedAd(AD_UNITS.rewarded);
   const tabBarHeight = useBottomTabBarHeight();
   const { showToast } = useToast();
@@ -58,7 +55,6 @@ const HomeScreen = () => {
   const [coordinates, setCoordinates] = useState<Coordinate[]>(INITIAL_COORDINATES);
   const [isScanning, setIsScanning] = useState(false);
   const [saveModalVisible, setSaveModalVisible] = useState(false);
-  const [isViewingMap, setIsViewingMap] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
 
   const [newX, setNewX] = useState('');
@@ -175,7 +171,7 @@ const HomeScreen = () => {
     try {
       const today = getTodayDateString();
       const usageRaw = await AsyncStorage.getItem('map_view_usage');
-      let usage = { date: today, count: 0, unlocked: false };
+      let usage = { date: today, count: 0 };
 
       if (usageRaw) {
         try {
@@ -184,7 +180,6 @@ const HomeScreen = () => {
             usage = {
               date: today,
               count: typeof parsed.count === 'number' ? parsed.count : 0,
-              unlocked: !!parsed.unlocked,
             };
           }
         } catch (e) {
@@ -192,25 +187,20 @@ const HomeScreen = () => {
         }
       }
 
-      if (usage.unlocked) {
-        triggerMedium();
-        const mapData = toMapPoints(title, selectedCity.value, coordinates);
-        (navigation as any).navigate('Map', { mapData });
-        return;
-      }
-
       if (usage.count < 5) {
-        const nextCount = usage.count + 1;
-        const newUsage = { date: today, count: nextCount, unlocked: false };
-        await AsyncStorage.setItem('map_view_usage', JSON.stringify(newUsage));
-
+        await AsyncStorage.setItem('map_view_usage', JSON.stringify({ date: today, count: usage.count + 1 }));
         triggerMedium();
         const mapData = toMapPoints(title, selectedCity.value, coordinates);
         (navigation as any).navigate('Map', { mapData });
       } else {
+        const navigateToMap = () => {
+          triggerMedium();
+          const mapData = toMapPoints(title, selectedCity.value, coordinates);
+          (navigation as any).navigate('Map', { mapData });
+        };
         Alert.alert(
           'Giới hạn xem bản đồ',
-          'Bạn đã hết 5 lượt xem bản đồ miễn phí hôm nay. Hãy nâng cấp Pro để xem không giới hạn hoặc xem quảng cáo ngắn để xem bản đồ tự do cả ngày.',
+          'Bạn đã dùng hết 5 lượt xem bản đồ miễn phí hôm nay. Hãy nâng cấp Pro để xem không giới hạn hoặc xem quảng cáo ngắn để tiếp tục.',
           [
             { text: 'Hủy', style: 'cancel' },
             {
@@ -223,23 +213,8 @@ const HomeScreen = () => {
               text: 'Xem quảng cáo',
               onPress: () => {
                 showRewardedAd(
-                  async () => {
-                    try {
-                      const newUsage = { date: today, count: 5, unlocked: true };
-                      await AsyncStorage.setItem('map_view_usage', JSON.stringify(newUsage));
-                      triggerMedium();
-                      const mapData = toMapPoints(title, selectedCity.value, coordinates);
-                      (navigation as any).navigate('Map', { mapData });
-                    } catch (e) {
-                      showToast('Lỗi khi mở khóa xem bản đồ.', 'error');
-                    }
-                  },
-                  () => {
-                    showToast('Chưa hoàn thành xem quảng cáo. Bạn vẫn được xem bản đồ lần này.', 'info');
-                    triggerMedium();
-                    const mapData = toMapPoints(title, selectedCity.value, coordinates);
-                    (navigation as any).navigate('Map', { mapData });
-                  }
+                  () => { navigateToMap(); },
+                  () => { navigateToMap(); }
                 );
               },
             },
@@ -423,14 +398,11 @@ const HomeScreen = () => {
             ]}
             android_ripple={{ color: 'rgba(255,255,255,0.25)' }}
             onPress={handleViewMap}
-            disabled={!hasCoordinates || isViewingMap}
+            disabled={!hasCoordinates}
             accessibilityRole="button"
             accessibilityLabel="Xem thửa đất trên bản đồ"
           >
-            {isViewingMap
-              ? <ActivityIndicator color="#fff" />
-              : <Text style={[t.typography.headline, { color: '#fff', fontFamily: t.fontFamily }]}>Xem Bản Đồ</Text>
-            }
+            <Text style={[t.typography.headline, { color: '#fff', fontFamily: t.fontFamily }]}>Xem Bản Đồ</Text>
           </Pressable>
 
           {/* Secondary CTA */}

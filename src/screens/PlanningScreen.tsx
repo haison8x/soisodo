@@ -5,7 +5,7 @@ import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { Globe, Smartphone, Info, Map as MapIcon, ChevronRight } from 'lucide-react-native';
 import { useTheme } from '../theme/ThemeProvider';
 
-import { fontScale, moderateScale, verticalScale } from '../utils/responsive';
+import { moderateScale, verticalScale } from '../utils/responsive';
 
 interface PlanningItem {
   province: string;

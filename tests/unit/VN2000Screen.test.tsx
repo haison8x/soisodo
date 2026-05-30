@@ -181,7 +181,7 @@ describe('VN2000Screen - Map View Limit Logic', () => {
     await waitFor(() => {
       expect(mockSetItem).toHaveBeenCalledWith(
         'vn2000_map_view_usage',
-        JSON.stringify({ date: today, count: 3, unlocked: false })
+        JSON.stringify({ date: today, count: 3 })
       );
       expect(mockNavigate).toHaveBeenCalledWith('ConvertGoogle', {
         latitude: 10.762622,
@@ -190,14 +190,13 @@ describe('VN2000Screen - Map View Limit Logic', () => {
     });
   });
 
-  it('bypasses checks if user has unlocked the screen for today', async () => {
+  it('shows alert when count >= 5, ignoring legacy unlocked flag', async () => {
     const today = getTodayDateString();
-    // Simulate user already watched rewarded ad today on this screen
+    // Old storage may have unlocked: true — should be ignored now
     mockGetItem.mockResolvedValue(JSON.stringify({ date: today, count: 5, unlocked: true }));
 
     const { getByText } = render(<VN2000Screen />);
-    
-    // Perform conversion
+
     fireEvent.press(getByText('Chuyển đổi sang WGS84'));
 
     await waitFor(() => {
@@ -207,11 +206,11 @@ describe('VN2000Screen - Map View Limit Logic', () => {
     fireEvent.press(getByText('Xem trên Maps'));
 
     await waitFor(() => {
-      expect(mockSetItem).not.toHaveBeenCalled();
-      expect(mockNavigate).toHaveBeenCalledWith('ConvertGoogle', {
-        latitude: 10.762622,
-        longitude: 106.660172,
-      });
+      expect(Alert.alert).toHaveBeenCalledWith(
+        'Giới hạn xem bản đồ',
+        expect.any(String),
+        expect.any(Array)
+      );
     });
   });
 
@@ -268,12 +267,12 @@ describe('VN2000Screen - Map View Limit Logic', () => {
     expect(mockNavigate).toHaveBeenCalledWith('Cài đặt');
   });
 
-  it('saves unlocked=true in storage and navigates to map on successful ad watch', async () => {
+  it('navigates to map after successful ad watch without saving to storage', async () => {
     const today = getTodayDateString();
     mockGetItem.mockResolvedValue(JSON.stringify({ date: today, count: 5, unlocked: false }));
 
     const { getByText } = render(<VN2000Screen />);
-    
+
     fireEvent.press(getByText('Chuyển đổi sang WGS84'));
 
     await waitFor(() => {
@@ -290,18 +289,14 @@ describe('VN2000Screen - Map View Limit Logic', () => {
     const buttons = alertCalls[0][2];
     const adButton = buttons.find((b: any) => b.text === 'Xem quảng cáo');
 
-    // Mock successful showAd completion
-    mockShowRewardedAd.mockImplementationOnce((onSuccess, onCancel) => {
-      onSuccess(true);
+    mockShowRewardedAd.mockImplementationOnce((onSuccess, _onCancel) => {
+      onSuccess();
     });
 
     adButton.onPress();
 
     await waitFor(() => {
-      expect(mockSetItem).toHaveBeenCalledWith(
-        'vn2000_map_view_usage',
-        JSON.stringify({ date: today, count: 5, unlocked: true })
-      );
+      expect(mockSetItem).not.toHaveBeenCalled();
       expect(mockNavigate).toHaveBeenCalledWith('ConvertGoogle', {
         latitude: 10.762622,
         longitude: 106.660172,

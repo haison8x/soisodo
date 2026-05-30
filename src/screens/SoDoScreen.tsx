@@ -13,7 +13,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Calendar, ChevronRight, Edit3, FileText, Map, MapPin, Trash2 } from 'lucide-react-native';
+import { Calendar, ChevronRight, FileText, Map, MapPin } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
 import { Alert, FlatList, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';

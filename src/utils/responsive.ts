@@ -1,7 +1,7 @@
-import { Dimensions, Platform } from 'react-native';
+import { Dimensions } from 'react-native';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 // Guideline sizes are based on standard ~5" screen mobile device
 const guidelineBaseWidth = 375;

@@ -16,7 +16,7 @@ import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { View, StyleSheet, Text, Platform, Pressable, Linking, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { nanoid } from 'nanoid/non-secure';
-import MapLibre, {
+import {
   MapView,
   Camera,
   ShapeSource,
@@ -34,11 +34,10 @@ import { getAddressFromCoordinates } from '../utils/geocoding';
 import { useTheme } from '../theme/ThemeProvider';
 import { useToast } from '../components/shared/ToastProvider';
 import { triggerSuccess } from '../utils/haptics';
+import { MAPTILER_KEY } from '../constants/mapConfig';
 import type { MapData, Project } from '../types';
 import type { RouteProp } from '@react-navigation/native';
 import type { HomeStackParamList } from '../types/navigation';
-
-const MAPTILER_KEY = '8DY7FmNFHpdvQiaVc2gb';
 
 interface MapStyle { id: string; name: string }
 

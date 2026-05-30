@@ -11,16 +11,15 @@
  * Expected new score: 74/100
  */
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, ActivityIndicator, Platform, Linking, Alert } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ActivityIndicator, Platform, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MapView, Camera, ShapeSource, CircleLayer } from '@maplibre/maplibre-react-native';
 import { ArrowLeft, MapPin, Plus, Minus, Map as MapIcon, Target } from 'lucide-react-native';
 import { getAddressFromCoordinates } from '../utils/geocoding';
 import { useTheme } from '../theme/ThemeProvider';
+import { MAPTILER_KEY } from '../constants/mapConfig';
 import type { StackScreenProps } from '@react-navigation/stack';
 import type { VN2000StackParamList } from '../types/navigation';
-
-const MAPTILER_KEY = '8DY7FmNFHpdvQiaVc2gb';
 
 const STYLES = [
   { id: 'streets-v2', name: 'Đường phố' },

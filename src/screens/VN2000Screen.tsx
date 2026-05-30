@@ -106,7 +106,7 @@ const VN2000Screen = () => {
     try {
       const today = getTodayDateString();
       const usageRaw = await AsyncStorage.getItem('vn2000_map_view_usage');
-      let usage = { date: today, count: 0, unlocked: false };
+      let usage = { date: today, count: 0 };
 
       if (usageRaw) {
         try {
@@ -115,7 +115,6 @@ const VN2000Screen = () => {
             usage = {
               date: today,
               count: typeof parsed.count === 'number' ? parsed.count : 0,
-              unlocked: !!parsed.unlocked,
             };
           }
         } catch (e) {
@@ -123,23 +122,14 @@ const VN2000Screen = () => {
         }
       }
 
-      if (usage.unlocked) {
-        triggerMedium();
-        navigateToMap();
-        return;
-      }
-
       if (usage.count < 5) {
-        const nextCount = usage.count + 1;
-        const newUsage = { date: today, count: nextCount, unlocked: false };
-        await AsyncStorage.setItem('vn2000_map_view_usage', JSON.stringify(newUsage));
-
+        await AsyncStorage.setItem('vn2000_map_view_usage', JSON.stringify({ date: today, count: usage.count + 1 }));
         triggerMedium();
         navigateToMap();
       } else {
         Alert.alert(
           'Giới hạn xem bản đồ',
-          'Bạn đã hết 5 lượt xem bản đồ miễn phí hôm nay. Hãy nâng cấp Pro để xem không giới hạn hoặc xem quảng cáo ngắn để xem bản đồ tự do cả ngày.',
+          'Bạn đã dùng hết 5 lượt xem bản đồ miễn phí hôm nay. Hãy nâng cấp Pro để xem không giới hạn hoặc xem quảng cáo ngắn để tiếp tục.',
           [
             { text: 'Hủy', style: 'cancel' },
             {
@@ -152,20 +142,13 @@ const VN2000Screen = () => {
               text: 'Xem quảng cáo',
               onPress: () => {
                 showRewardedAd(
-                  async (success?: boolean) => {
-                    if (success) {
-                      try {
-                        const newUsage = { date: today, count: 5, unlocked: true };
-                        await AsyncStorage.setItem('vn2000_map_view_usage', JSON.stringify(newUsage));
-                      } catch (e) {
-                        console.error('Error saving vn2000_map_view_usage after rewarded ad success', e);
-                      }
-                    }
+                  () => {
                     triggerMedium();
                     navigateToMap();
                   },
                   () => {
-                    // Do nothing, stay on VN2000Screen
+                    triggerMedium();
+                    navigateToMap();
                   }
                 );
               },
