@@ -16,7 +16,7 @@ jest.mock('react-native-google-mobile-ads', () => ({
     createForAdRequest: jest.fn(() => mockRewardedAd),
   },
   RewardedAdEventType: { LOADED: 'loaded', EARNED_REWARD: 'earned_reward' },
-  AdEventType: { CLOSED: 'closed' },
+  AdEventType: { CLOSED: 'closed', ERROR: 'error' },
   TestIds: { REWARDED: 'test-rewarded' },
 }));
 
@@ -32,18 +32,19 @@ beforeEach(() => {
 });
 
 describe('useRewardedAd', () => {
-  it('calls onDismissed immediately when ad is not loaded', () => {
+  it('calls onRewarded immediately with false when ad is not loaded (fallback)', () => {
     const { result } = renderHook(() => useRewardedAd('test-unit'));
     const onRewarded = jest.fn();
     const onDismissed = jest.fn();
 
     act(() => { result.current.showAd(onRewarded, onDismissed); });
 
-    expect(onDismissed).toHaveBeenCalledTimes(1);
-    expect(onRewarded).not.toHaveBeenCalled();
+    expect(onRewarded).toHaveBeenCalledTimes(1);
+    expect(onRewarded).toHaveBeenCalledWith(false);
+    expect(onDismissed).not.toHaveBeenCalled();
   });
 
-  it('calls onRewarded when EARNED_REWARD fires before CLOSED', async () => {
+  it('calls onRewarded with true when EARNED_REWARD fires before CLOSED', async () => {
     const { result } = renderHook(() => useRewardedAd('test-unit'));
 
     // Simulate ad loaded
@@ -59,6 +60,7 @@ describe('useRewardedAd', () => {
     act(() => { mockRewardedListeners['closed']?.(); });
 
     expect(onRewarded).toHaveBeenCalledTimes(1);
+    expect(onRewarded).toHaveBeenCalledWith(true);
     expect(onDismissed).not.toHaveBeenCalled();
   });
 
@@ -76,6 +78,23 @@ describe('useRewardedAd', () => {
 
     expect(onDismissed).toHaveBeenCalledTimes(1);
     expect(onRewarded).not.toHaveBeenCalled();
+  });
+
+  it('calls onRewarded with false when ERROR fires during show', async () => {
+    const { result } = renderHook(() => useRewardedAd('test-unit'));
+
+    act(() => { mockRewardedListeners['loaded']?.(); });
+
+    const onRewarded = jest.fn();
+    const onDismissed = jest.fn();
+    act(() => { result.current.showAd(onRewarded, onDismissed); });
+
+    // Simulate error during show
+    act(() => { mockRewardedListeners['error']?.(new Error('Failed to show')); });
+
+    expect(onRewarded).toHaveBeenCalledTimes(1);
+    expect(onRewarded).toHaveBeenCalledWith(false);
+    expect(onDismissed).not.toHaveBeenCalled();
   });
 
   it('preloads next ad after close', async () => {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { render, waitFor } from '@testing-library/react-native';
 
 jest.mock('react-native-google-mobile-ads', () => ({
   TestIds: {
@@ -11,6 +11,11 @@ jest.mock('react-native-google-mobile-ads', () => ({
     load: jest.fn(),
     show: jest.fn(),
   })) },
+  NativeAd: { createForAdRequest: jest.fn(() => Promise.resolve({ destroy: jest.fn() })) },
+  NativeAdView: ({ children }: any) => children,
+  NativeAsset: ({ children }: any) => children,
+  NativeAssetType: { ICON: 'icon', HEADLINE: 'headline', ADVERTISER: 'advertiser', BODY: 'body', CALL_TO_ACTION: 'call_to_action' },
+  NativeMediaView: () => null,
 }));
 
 jest.mock('@react-native-async-storage/async-storage', () => ({
@@ -103,25 +108,31 @@ beforeEach(() => {
 });
 
 describe('SettingsScreen — rewarded ad section', () => {
-  it('shows rewarded ad row when user is free tier and no active ad-free period', () => {
+  it('shows rewarded ad row when user is free tier and no active ad-free period', async () => {
     mockIsAdSuppressed.mockReturnValue(false);
     mockIsAdFreePeriodActive.mockReturnValue(false);
     const { getByText } = render(<SettingsScreen />);
-    expect(getByText(/xem quảng cáo/i)).toBeTruthy();
+    await waitFor(() => {
+      expect(getByText(/xem quảng cáo/i)).toBeTruthy();
+    });
   });
 
-  it('does NOT show rewarded ad row when user is premium (isAdSuppressed = true)', () => {
+  it('does NOT show rewarded ad row when user is premium (isAdSuppressed = true)', async () => {
     mockIsAdSuppressed.mockReturnValue(true);
     mockIsAdFreePeriodActive.mockReturnValue(false);
     const { queryByText } = render(<SettingsScreen />);
-    expect(queryByText(/xem quảng cáo để miễn/i)).toBeNull();
+    await waitFor(() => {
+      expect(queryByText(/xem quảng cáo để miễn/i)).toBeNull();
+    });
   });
 
-  it('shows remaining time when ad-free period is active', () => {
+  it('shows remaining time when ad-free period is active', async () => {
     mockIsAdSuppressed.mockReturnValue(true);
     mockIsAdFreePeriodActive.mockReturnValue(true);
     (AdFreeService.getAdFreeRemainingMs as jest.Mock).mockReturnValue(2 * 60 * 60 * 1000); // 2h
     const { getByText } = render(<SettingsScreen />);
-    expect(getByText(/miễn quảng cáo/i)).toBeTruthy();
+    await waitFor(() => {
+      expect(getByText(/miễn quảng cáo/i)).toBeTruthy();
+    });
   });
 });

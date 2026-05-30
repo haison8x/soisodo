@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { render, waitFor } from '@testing-library/react-native';
 
 jest.mock('react-native-google-mobile-ads', () => ({
   TestIds: {
@@ -17,6 +17,11 @@ jest.mock('react-native-google-mobile-ads', () => ({
     show: jest.fn(),
   })) },
   AdEventType: { LOADED: 'loaded', CLOSED: 'closed' },
+  NativeAd: { createForAdRequest: jest.fn(() => Promise.resolve({ destroy: jest.fn() })) },
+  NativeAdView: ({ children }: any) => children,
+  NativeAsset: ({ children }: any) => children,
+  NativeAssetType: { ICON: 'icon', HEADLINE: 'headline', ADVERTISER: 'advertiser', BODY: 'body', CALL_TO_ACTION: 'call_to_action' },
+  NativeMediaView: () => null,
 }));
 
 // Mock AsyncStorage
@@ -125,10 +130,9 @@ describe('SoDoScreen — rewarded ad prompt', () => {
 
     render(<SoDoScreen />);
 
-    // Wait for async operations
-    await new Promise(r => setTimeout(r, 50));
-
-    expect(mockShowRewardedAd).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(mockShowRewardedAd).not.toHaveBeenCalled();
+    });
   });
 
   it('does NOT show rewarded prompt when AdFreeService.isAdSuppressed() is true', async () => {
@@ -137,9 +141,10 @@ describe('SoDoScreen — rewarded ad prompt', () => {
     mockIsAdSuppressed.mockReturnValue(true);
 
     render(<SoDoScreen />);
-    await new Promise(r => setTimeout(r, 50));
-
-    expect(mockShowRewardedAd).not.toHaveBeenCalled();
+    
+    await waitFor(() => {
+      expect(mockShowRewardedAd).not.toHaveBeenCalled();
+    });
   });
 
   it('does NOT show rewarded prompt when last prompt was within throttle window', async () => {
@@ -149,9 +154,10 @@ describe('SoDoScreen — rewarded ad prompt', () => {
     mockGetSodoLastPromptMs.mockResolvedValue(Date.now() - SODO_REWARDED_THROTTLE_MS / 2);
 
     render(<SoDoScreen />);
-    await new Promise(r => setTimeout(r, 50));
-
-    expect(mockShowRewardedAd).not.toHaveBeenCalled();
+    
+    await waitFor(() => {
+      expect(mockShowRewardedAd).not.toHaveBeenCalled();
+    });
   });
 
   it('shows rewarded prompt when > 10 sổ, not suppressed, and throttle expired', async () => {
@@ -160,10 +166,11 @@ describe('SoDoScreen — rewarded ad prompt', () => {
     mockGetSodoLastPromptMs.mockResolvedValue(0); // never shown before
 
     render(<SoDoScreen />);
-    await new Promise(r => setTimeout(r, 50));
-
-    expect(mockSaveSodoLastPromptMs).toHaveBeenCalledTimes(1);
-    expect(mockShowRewardedAd).toHaveBeenCalledTimes(1);
+    
+    await waitFor(() => {
+      expect(mockSaveSodoLastPromptMs).toHaveBeenCalledTimes(1);
+      expect(mockShowRewardedAd).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('saves last prompt timestamp before showing ad', async () => {
@@ -171,7 +178,11 @@ describe('SoDoScreen — rewarded ad prompt', () => {
     mockGetItem.mockResolvedValue(JSON.stringify(projects));
 
     render(<SoDoScreen />);
-    await new Promise(r => setTimeout(r, 50));
+    
+    await waitFor(() => {
+      expect(mockSaveSodoLastPromptMs).toHaveBeenCalled();
+      expect(mockShowRewardedAd).toHaveBeenCalled();
+    });
 
     const saveCallOrder = mockSaveSodoLastPromptMs.mock.invocationCallOrder[0];
     const showCallOrder = mockShowRewardedAd.mock.invocationCallOrder[0];

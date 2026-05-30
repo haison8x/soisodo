@@ -6,7 +6,7 @@ export const useRewardedAd = (adUnitId: string) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const adRef = useRef<ReturnType<typeof RewardedAd.createForAdRequest> | null>(null);
   const earnedFlagRef = useRef(false);
-  const onRewardedRef = useRef<(() => void) | null>(null);
+  const onRewardedRef = useRef<((success: boolean) => void) | null>(null);
   const onDismissedRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -23,22 +23,27 @@ export const useRewardedAd = (adUnitId: string) => {
     });
 
     const unsubClosed = ad.addAdEventListener(AdEventType.CLOSED, () => {
-      if (earnedFlagRef.current) {
-        earnedFlagRef.current = false;
-        onRewardedRef.current?.();
-      } else {
-        onDismissedRef.current?.();
+      if (onRewardedRef.current) {
+        if (earnedFlagRef.current) {
+          earnedFlagRef.current = false;
+          onRewardedRef.current(true);
+        } else {
+          onDismissedRef.current?.();
+        }
+        onRewardedRef.current = null;
+        onDismissedRef.current = null;
       }
-      onRewardedRef.current = null;
-      onDismissedRef.current = null;
       setIsLoaded(false);
       ad.load();
     });
 
     const unsubError = ad.addAdEventListener(AdEventType.ERROR, (error) => {
       console.log('Rewarded ad error:', error.message);
-      // Fallback: If ad fails, still consider it earned to not block user
-      earnedFlagRef.current = true;
+      if (onRewardedRef.current) {
+        onRewardedRef.current(false);
+        onRewardedRef.current = null;
+        onDismissedRef.current = null;
+      }
       setIsLoaded(false);
     });
 
@@ -53,15 +58,15 @@ export const useRewardedAd = (adUnitId: string) => {
   }, [adUnitId]);
 
   const showAd = useCallback(
-    (onRewarded: () => void, onDismissed?: () => void) => {
+    (onRewarded: (success: boolean) => void, onDismissed?: () => void) => {
       if (AdFreeService.isAdSuppressed()) {
-        onRewarded();
+        onRewarded(true);
         return;
       }
 
       if (!isLoaded || !adRef.current) {
-        // Fallback: If ad not loaded or error, grant reward anyway for better UX
-        onRewarded();
+        // Fallback: If ad not loaded or error, grant reward anyway for better UX but with success = false
+        onRewarded(false);
         return;
       }
       onRewardedRef.current = onRewarded;

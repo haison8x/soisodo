@@ -29,7 +29,7 @@ const AdFreeService = {
   },
 
   isAdFreePeriodActive(): boolean {
-    return _adFreeUntil > Date.now();
+    return !_isPremium && _adFreeUntil > Date.now();
   },
 
   isAdSuppressed(): boolean {

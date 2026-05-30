@@ -1,5 +1,14 @@
 import '@testing-library/jest-native/extend-expect';
 
+// Suppress React act(...) warnings in test logs
+const originalConsoleError = console.error;
+console.error = (...args) => {
+  if (args[0] && typeof args[0] === 'string' && args[0].includes('was not wrapped in act')) {
+    return;
+  }
+  originalConsoleError(...args);
+};
+
 // Mock Expo's winter registry if it causes issues in Node environment
 if (typeof globalThis !== 'undefined') {
   (globalThis as any).__ExpoImportMetaRegistry = {
@@ -43,5 +52,18 @@ jest.mock('expo-constants', () => ({
     name: 'soitoadovn',
     slug: 'soitoadovn',
   },
+}));
+
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  getItem: jest.fn(async () => null),
+  setItem: jest.fn(async () => {}),
+  removeItem: jest.fn(async () => {}),
+  clear: jest.fn(async () => {}),
+  mergeItem: jest.fn(async () => {}),
+  multiGet: jest.fn(async () => []),
+  multiSet: jest.fn(async () => {}),
+  multiRemove: jest.fn(async () => {}),
+  multiMerge: jest.fn(async () => {}),
+  getAllKeys: jest.fn(async () => []),
 }));
 

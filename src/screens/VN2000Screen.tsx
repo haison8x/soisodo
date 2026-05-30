@@ -29,6 +29,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BannerAdSize } from 'react-native-google-mobile-ads';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import AdFreeService from '../services/AdFreeService';
+import { useRewardedAd } from '../hooks/useRewardedAd';
+import { AD_UNITS } from '../constants/adUnits';
 import AdBanner from '../components/AdBanner';
 import NativeAdBanner from '../components/NativeAdBanner';
 import { useInterstitialAd } from '../hooks/useInterstitialAd';
@@ -44,6 +48,7 @@ interface Province { key: string; label: string }
 const VN2000Screen = () => {
   const navigation = useNavigation();
   const { showAd } = useInterstitialAd();
+  const { showAd: showRewardedAd } = useRewardedAd(AD_UNITS.rewarded);
   const tabBarHeight = useBottomTabBarHeight();
   const t = useTheme();
 
@@ -69,6 +74,14 @@ const VN2000Screen = () => {
     return provinces.filter(p => p.label.toLowerCase().includes(searchQuery.toLowerCase()));
   }, [provinces, searchQuery]);
 
+  const getTodayDateString = () => {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
   const handleConvert = () => {
     triggerMedium();
     if (!xCoord || !yCoord) { Alert.alert('Thiếu thông tin', 'Vui lòng nhập đầy đủ tọa độ X và Y'); return; }
@@ -77,9 +90,93 @@ const VN2000Screen = () => {
     else { Alert.alert('Lỗi', 'Không thể chuyển đổi tọa độ. Vui lòng kiểm tra lại số liệu.'); }
   };
 
-  const handleViewOnMap = () => {
-    if (result) {
+  const handleViewOnMap = async () => {
+    if (!result) return;
+
+    const navigateToMap = () => {
       showAd(() => (navigation as any).navigate('ConvertGoogle', { latitude: result.latitude, longitude: result.longitude }));
+    };
+
+    if (AdFreeService.isPremium()) {
+      triggerMedium();
+      navigateToMap();
+      return;
+    }
+
+    try {
+      const today = getTodayDateString();
+      const usageRaw = await AsyncStorage.getItem('vn2000_map_view_usage');
+      let usage = { date: today, count: 0, unlocked: false };
+
+      if (usageRaw) {
+        try {
+          const parsed = JSON.parse(usageRaw);
+          if (parsed && parsed.date === today) {
+            usage = {
+              date: today,
+              count: typeof parsed.count === 'number' ? parsed.count : 0,
+              unlocked: !!parsed.unlocked,
+            };
+          }
+        } catch (e) {
+          console.error('Error parsing vn2000_map_view_usage', e);
+        }
+      }
+
+      if (usage.unlocked) {
+        triggerMedium();
+        navigateToMap();
+        return;
+      }
+
+      if (usage.count < 5) {
+        const nextCount = usage.count + 1;
+        const newUsage = { date: today, count: nextCount, unlocked: false };
+        await AsyncStorage.setItem('vn2000_map_view_usage', JSON.stringify(newUsage));
+
+        triggerMedium();
+        navigateToMap();
+      } else {
+        Alert.alert(
+          'Giới hạn xem bản đồ',
+          'Bạn đã hết 5 lượt xem bản đồ miễn phí hôm nay. Hãy nâng cấp Pro để xem không giới hạn hoặc xem quảng cáo ngắn để xem bản đồ tự do cả ngày.',
+          [
+            { text: 'Hủy', style: 'cancel' },
+            {
+              text: 'Mua bản Pro',
+              onPress: () => {
+                navigation.navigate('Cài đặt' as never);
+              },
+            },
+            {
+              text: 'Xem quảng cáo',
+              onPress: () => {
+                showRewardedAd(
+                  async (success?: boolean) => {
+                    if (success) {
+                      try {
+                        const newUsage = { date: today, count: 5, unlocked: true };
+                        await AsyncStorage.setItem('vn2000_map_view_usage', JSON.stringify(newUsage));
+                      } catch (e) {
+                        console.error('Error saving vn2000_map_view_usage after rewarded ad success', e);
+                      }
+                    }
+                    triggerMedium();
+                    navigateToMap();
+                  },
+                  () => {
+                    // Do nothing, stay on VN2000Screen
+                  }
+                );
+              },
+            },
+          ]
+        );
+      }
+    } catch (err) {
+      console.error('Error checking vn2000 map view count:', err);
+      triggerMedium();
+      navigateToMap();
     }
   };
 
