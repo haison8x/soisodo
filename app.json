@@ -18,7 +18,10 @@
       "buildNumber": "1",
       "infoPlist": {
         "CFBundleDisplayName": "Định Vị Nhà Đất - VN2000",
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "LSApplicationQueriesSchemes": [
+          "comgooglemaps"
+        ]
       }
     },
     "android": {

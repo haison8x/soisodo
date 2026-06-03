@@ -64,11 +64,19 @@ const ConvertGoogleScreen = ({ route, navigation }: Props) => {
   };
 
   const openGoogleMaps = () => {
-    const url = Platform.OS === 'ios'
-      ? `maps://0,0?q=${latitude},${longitude}`
-      : `geo:0,0?q=${latitude},${longitude}(Vị trí)`;
+    const iosAppUrl = `comgooglemaps://?q=${latitude},${longitude}`;
+    const androidAppUrl = `geo:0,0?q=${latitude},${longitude}(Vị trí)`;
     const webUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
-    Linking.canOpenURL(url).then(s => Linking.openURL(s ? url : webUrl)).catch(() => Linking.openURL(webUrl));
+
+    if (Platform.OS === 'ios') {
+      Linking.canOpenURL(iosAppUrl)
+        .then(supported => Linking.openURL(supported ? iosAppUrl : webUrl))
+        .catch(() => Linking.openURL(webUrl));
+    } else {
+      Linking.canOpenURL(androidAppUrl)
+        .then(supported => Linking.openURL(supported ? androidAppUrl : webUrl))
+        .catch(() => Linking.openURL(webUrl));
+    }
   };
 
   const GLASS = t.colors.glassDark;

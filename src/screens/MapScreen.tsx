@@ -193,12 +193,19 @@ const MapScreen = () => {
     const lons = mapData.wgs84Points.map(p => p.longitude);
     const cLat = (Math.max(...lats) + Math.min(...lats)) / 2;
     const cLon = (Math.max(...lons) + Math.min(...lons)) / 2;
-    const url = Platform.OS === 'ios'
-      ? `maps://0,0?q=${cLat},${cLon}`
-      : `geo:0,0?q=${cLat},${cLon}(${encodeURIComponent(mapData.name ?? 'Dự án')})`;
-    Linking.canOpenURL(url)
-      .then(s => Linking.openURL(s ? url : `https://www.google.com/maps/search/?api=1&query=${cLat},${cLon}`))
-      .catch(() => Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${cLat},${cLon}`));
+    const iosAppUrl = `comgooglemaps://?q=${cLat},${cLon}`;
+    const androidAppUrl = `geo:0,0?q=${cLat},${cLon}(${encodeURIComponent(mapData.name ?? 'Dự án')})`;
+    const webUrl = `https://www.google.com/maps/search/?api=1&query=${cLat},${cLon}`;
+
+    if (Platform.OS === 'ios') {
+      Linking.canOpenURL(iosAppUrl)
+        .then(supported => Linking.openURL(supported ? iosAppUrl : webUrl))
+        .catch(() => Linking.openURL(webUrl));
+    } else {
+      Linking.canOpenURL(androidAppUrl)
+        .then(supported => Linking.openURL(supported ? androidAppUrl : webUrl))
+        .catch(() => Linking.openURL(webUrl));
+    }
   };
 
   const firstPoint = mapData?.wgs84Points?.[0];
