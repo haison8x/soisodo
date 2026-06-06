@@ -29,10 +29,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BannerAdSize } from 'react-native-google-mobile-ads';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import AdFreeService from '../services/AdFreeService';
-import { useRewardedAd } from '../hooks/useRewardedAd';
 import { AD_UNITS } from '../constants/adUnits';
+import { useDailyMapViewLimit } from '../hooks/useDailyMapViewLimit';
 import AdBanner from '../components/AdBanner';
 import NativeAdBanner from '../components/NativeAdBanner';
 import { useInterstitialAd } from '../hooks/useInterstitialAd';
@@ -48,7 +46,7 @@ interface Province { key: string; label: string }
 const VN2000Screen = () => {
   const navigation = useNavigation();
   const { showAd } = useInterstitialAd();
-  const { showAd: showRewardedAd } = useRewardedAd(AD_UNITS.rewarded);
+  const { runWithLimit } = useDailyMapViewLimit();
   const tabBarHeight = useBottomTabBarHeight();
   const t = useTheme();
 
@@ -74,14 +72,6 @@ const VN2000Screen = () => {
     return provinces.filter(p => p.label.toLowerCase().includes(searchQuery.toLowerCase()));
   }, [provinces, searchQuery]);
 
-  const getTodayDateString = () => {
-    const d = new Date();
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-  };
-
   const handleConvert = () => {
     triggerMedium();
     if (!xCoord || !yCoord) { Alert.alert('Thiếu thông tin', 'Vui lòng nhập đầy đủ tọa độ X và Y'); return; }
@@ -90,77 +80,12 @@ const VN2000Screen = () => {
     else { Alert.alert('Lỗi', 'Không thể chuyển đổi tọa độ. Vui lòng kiểm tra lại số liệu.'); }
   };
 
-  const handleViewOnMap = async () => {
+  const handleViewOnMap = () => {
     if (!result) return;
-
-    const navigateToMap = () => {
+    runWithLimit(() => {
+      triggerMedium();
       showAd(() => (navigation as any).navigate('ConvertGoogle', { latitude: result.latitude, longitude: result.longitude }));
-    };
-
-    if (AdFreeService.isPremium()) {
-      triggerMedium();
-      navigateToMap();
-      return;
-    }
-
-    try {
-      const today = getTodayDateString();
-      const usageRaw = await AsyncStorage.getItem('vn2000_map_view_usage');
-      let usage = { date: today, count: 0 };
-
-      if (usageRaw) {
-        try {
-          const parsed = JSON.parse(usageRaw);
-          if (parsed && parsed.date === today) {
-            usage = {
-              date: today,
-              count: typeof parsed.count === 'number' ? parsed.count : 0,
-            };
-          }
-        } catch (e) {
-          console.error('Error parsing vn2000_map_view_usage', e);
-        }
-      }
-
-      if (usage.count < 5) {
-        await AsyncStorage.setItem('vn2000_map_view_usage', JSON.stringify({ date: today, count: usage.count + 1 }));
-        triggerMedium();
-        navigateToMap();
-      } else {
-        Alert.alert(
-          'Giới hạn xem bản đồ',
-          'Bạn đã dùng hết 5 lượt xem bản đồ miễn phí hôm nay. Hãy nâng cấp Pro để xem không giới hạn hoặc xem quảng cáo ngắn để tiếp tục.',
-          [
-            { text: 'Hủy', style: 'cancel' },
-            {
-              text: 'Mua bản Pro',
-              onPress: () => {
-                navigation.navigate('Cài đặt' as never);
-              },
-            },
-            {
-              text: 'Xem quảng cáo',
-              onPress: () => {
-                showRewardedAd(
-                  () => {
-                    triggerMedium();
-                    navigateToMap();
-                  },
-                  () => {
-                    triggerMedium();
-                    navigateToMap();
-                  }
-                );
-              },
-            },
-          ]
-        );
-      }
-    } catch (err) {
-      console.error('Error checking vn2000 map view count:', err);
-      triggerMedium();
-      navigateToMap();
-    }
+    });
   };
 
   const openModal = () => {

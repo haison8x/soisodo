@@ -45,3 +45,4 @@ yarn-error.*
 /ui-audit/
 *.ipa
 /ios/
+/.claude/settings.json

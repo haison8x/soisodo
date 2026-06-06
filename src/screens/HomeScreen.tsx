@@ -30,6 +30,7 @@ import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/nativ
 import { getAddressFromCoordinates } from '../utils/geocoding';
 import { useRewardedAd } from '../hooks/useRewardedAd';
 import { AD_UNITS, SODO_REWARDED_MIN_COUNT } from '../constants/adUnits';
+import { useDailyMapViewLimit } from '../hooks/useDailyMapViewLimit';
 import AdFreeService from '../services/AdFreeService';
 import { useToast } from '../components/shared/ToastProvider';
 import { triggerMedium, triggerSuccess } from '../utils/haptics';
@@ -40,6 +41,7 @@ const HomeScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const { showAd: showRewardedAd } = useRewardedAd(AD_UNITS.rewarded);
+  const { runWithLimit } = useDailyMapViewLimit();
   const tabBarHeight = useBottomTabBarHeight();
   const { showToast } = useToast();
   const t = useTheme();
@@ -150,83 +152,13 @@ const HomeScreen = () => {
     const tmp = newX; setNewX(newY); setNewY(tmp);
   };
 
-  const getTodayDateString = () => {
-    const d = new Date();
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-  };
-
-  const handleViewMap = async () => {
+  const handleViewMap = () => {
     if (coordinates.length === 0) return;
-
-    if (AdFreeService.isPremium()) {
+    const mapData = toMapPoints(title, selectedCity.value, coordinates);
+    runWithLimit(() => {
       triggerMedium();
-      const mapData = toMapPoints(title, selectedCity.value, coordinates);
       (navigation as any).navigate('Map', { mapData });
-      return;
-    }
-
-    try {
-      const today = getTodayDateString();
-      const usageRaw = await AsyncStorage.getItem('map_view_usage');
-      let usage = { date: today, count: 0 };
-
-      if (usageRaw) {
-        try {
-          const parsed = JSON.parse(usageRaw);
-          if (parsed && parsed.date === today) {
-            usage = {
-              date: today,
-              count: typeof parsed.count === 'number' ? parsed.count : 0,
-            };
-          }
-        } catch (e) {
-          console.error('Error parsing map_view_usage', e);
-        }
-      }
-
-      if (usage.count < 5) {
-        await AsyncStorage.setItem('map_view_usage', JSON.stringify({ date: today, count: usage.count + 1 }));
-        triggerMedium();
-        const mapData = toMapPoints(title, selectedCity.value, coordinates);
-        (navigation as any).navigate('Map', { mapData });
-      } else {
-        const navigateToMap = () => {
-          triggerMedium();
-          const mapData = toMapPoints(title, selectedCity.value, coordinates);
-          (navigation as any).navigate('Map', { mapData });
-        };
-        Alert.alert(
-          'Giới hạn xem bản đồ',
-          'Bạn đã dùng hết 5 lượt xem bản đồ miễn phí hôm nay. Hãy nâng cấp Pro để xem không giới hạn hoặc xem quảng cáo ngắn để tiếp tục.',
-          [
-            { text: 'Hủy', style: 'cancel' },
-            {
-              text: 'Mua bản Pro',
-              onPress: () => {
-                navigation.navigate('Cài đặt' as never);
-              },
-            },
-            {
-              text: 'Xem quảng cáo',
-              onPress: () => {
-                showRewardedAd(
-                  () => { navigateToMap(); },
-                  () => { navigateToMap(); }
-                );
-              },
-            },
-          ]
-        );
-      }
-    } catch (err) {
-      console.error('Error checking map view count:', err);
-      triggerMedium();
-      const mapData = toMapPoints(title, selectedCity.value, coordinates);
-      (navigation as any).navigate('Map', { mapData });
-    }
+    });
   };
 
   const handleSaveProject = async (saveTitle: string) => {
