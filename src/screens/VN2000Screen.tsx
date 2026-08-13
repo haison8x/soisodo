@@ -14,7 +14,7 @@
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
 import { Check, ChevronDown, Compass, Info, MapPin, Search, X } from 'lucide-react-native';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   FlatList,
@@ -56,6 +56,8 @@ const VN2000Screen = () => {
     key: 'EPSG:_TP-Hồ-Chí-Minh', label: 'TP Hồ Chí Minh',
   });
   const [result, setResult] = useState<WGS84Point | null>(null);
+  // Delay hiển thị quảng cáo sau khi có kết quả để tránh nhấp nhầm ngay sau khi bấm nút (AdMob: accidental clicks)
+  const [showResultAd, setShowResultAd] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const searchRef = useRef<TextInput>(null);
@@ -71,6 +73,13 @@ const VN2000Screen = () => {
     if (!searchQuery) return provinces;
     return provinces.filter(p => p.label.toLowerCase().includes(searchQuery.toLowerCase()));
   }, [provinces, searchQuery]);
+
+  useEffect(() => {
+    if (!result) { setShowResultAd(false); return; }
+    setShowResultAd(false);
+    const timer = setTimeout(() => setShowResultAd(true), 1000);
+    return () => clearTimeout(timer);
+  }, [result]);
 
   const handleConvert = () => {
     triggerMedium();
@@ -179,7 +188,6 @@ const VN2000Screen = () => {
 
           {result && (
             <View style={[styles.card, { backgroundColor: t.colors.surface, borderRadius: t.radius.lg }, t.shadow.sm]}>
-              <AdBanner size={BannerAdSize.BANNER} style={{ marginBottom: 16 }} />
               <Text style={[t.typography.headline, { color: t.colors.label, marginBottom: t.spacing.base, fontFamily: t.fontFamily }]}>
                 Kết quả
               </Text>
@@ -202,6 +210,13 @@ const VN2000Screen = () => {
                 <MapPin size={20} color={t.colors.textOnPrimary} />
                 <Text style={[t.typography.headline, { color: t.colors.textOnPrimary, fontFamily: t.fontFamily }]}>Xem trên Maps</Text>
               </Pressable>
+            </View>
+          )}
+
+          {/* Quảng cáo tách riêng, cách nút hành động, hiện sau delay để tránh nhấp nhầm */}
+          {result && showResultAd && (
+            <View style={[styles.card, styles.adCard, { backgroundColor: t.colors.surface, borderRadius: t.radius.lg }, t.shadow.sm]}>
+              <AdBanner size={BannerAdSize.BANNER} />
             </View>
           )}
 
@@ -286,6 +301,7 @@ const styles = StyleSheet.create({
   header: { paddingVertical: moderateScale(16), paddingHorizontal: moderateScale(20), borderBottomWidth: StyleSheet.hairlineWidth },
   content: { padding: moderateScale(20) },
   card: { padding: moderateScale(20), marginBottom: moderateScale(20) },
+  adCard: { alignItems: 'center', justifyContent: 'center' },
   inputGroup: { flex: 1 },
   input: {
     minHeight: verticalScale(48), paddingHorizontal: moderateScale(16), paddingVertical: moderateScale(14),

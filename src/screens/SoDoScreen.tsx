@@ -193,7 +193,7 @@ const SoDoScreen = () => {
           showsVerticalScrollIndicator={false}
           ListFooterComponent={
             projects.length <= 3
-              ? <AdBanner style={{ borderRadius: 10, marginTop: 4, marginBottom: 8 }} />
+              ? <AdBanner style={{ borderRadius: 10, marginTop: 24, marginBottom: 8 }} />
               : null
           }
         />
